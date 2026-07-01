@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import Sidebar from './Sidebar'
 import Dashboard from './Dashboard'
 import Chat from '../modules/Chat/Chat'
@@ -9,11 +9,12 @@ import FundraisersModule from '../modules/Fundraisers/FundraisersModule'
 import SpiritWearModule from '../modules/SpiritWear/SpiritWearModule'
 import ProgramsModule from '../modules/Programs/ProgramsModule'
 import ClubsModule from '../modules/Clubs/ClubsModule'
-import TreasurerModule from '../modules/Treasurer/TreasurerModule'
 import CreativeModule from '../modules/Creative/CreativeModule'
 import WebsiteModule from '../modules/Website/WebsiteModule'
 import OfficerChat from '../modules/Chat/OfficerChat'
 import { useAuth } from '../contexts/AuthContext'
+
+const TreasurerModule = lazy(() => import('../modules/Treasurer/TreasurerModule'))
 
 interface LayoutProps {
   activeModule: string
@@ -52,7 +53,7 @@ export default function Layout({ activeModule, setActiveModule }: LayoutProps) {
       case 'spiritwear': return <SpiritWearModule />
       case 'programs': return <ProgramsModule />
       case 'clubs': return <ClubsModule />
-      case 'treasurer': return <TreasurerModule />
+      case 'treasurer': return <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-400">Loading…</div>}><TreasurerModule /></Suspense>
       case 'creative': return <CreativeModule />
       case 'website': return <WebsiteModule />
       default: return <Dashboard setActiveModule={setActiveModule} />
