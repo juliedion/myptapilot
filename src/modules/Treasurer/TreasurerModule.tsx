@@ -1,3 +1,4 @@
+import ModuleHeader from '../../components/ModuleHeader'
 import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 
@@ -92,10 +93,9 @@ export default function TreasurerModule() {
         <p className="text-sm text-amber-800"><strong>Private — Treasurer Only.</strong> This financial data is restricted to the PTA Treasurer and authorized officers.</p>
       </div>
 
+      <ModuleHeader title="Treasurer Portal" subtitle="Private financial dashboard — restricted to the Treasurer" gradient="gradient-warm" icon="🔐" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Treasurer Portal</h1>
-          <p className="text-slate-500 text-sm mt-1">Profit & Loss · Tax Records · Financial Reporting</p>
         </div>
         <div className="flex gap-3">
           <button className="btn-secondary">

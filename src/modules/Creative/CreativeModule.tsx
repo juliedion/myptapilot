@@ -1,3 +1,4 @@
+import ModuleHeader from '../../components/ModuleHeader'
 import { useState } from 'react'
 
 const TEMPLATES = [
@@ -107,10 +108,9 @@ export default function CreativeModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Flyers & Graphics Studio" subtitle="Design beautiful flyers, social posts, and marketing materials" gradient="gradient-vivid" icon="🎨" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Flyers & Graphics Studio</h1>
-          <p className="text-slate-500 text-sm mt-1">Create high-quality flyers, brochures, and social media graphics</p>
         </div>
         <div className="flex gap-3">
           <button className="btn-secondary">

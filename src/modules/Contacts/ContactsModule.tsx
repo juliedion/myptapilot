@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ModuleHeader from '../../components/ModuleHeader'
 
 interface Contact {
   id: string
@@ -61,10 +62,9 @@ export default function ContactsModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Contact Directory" subtitle="Manage parents, officers, teachers, and volunteers" gradient="gradient-vivid" icon="👥" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Contact Directory</h1>
-          <p className="text-slate-500 text-sm mt-1">Parents, officers, members, teachers & vendors all in one place</p>
         </div>
         <div className="flex gap-3">
           <button className="btn-secondary">

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ModuleHeader from '../../components/ModuleHeader'
 
 interface OrderItem {
   name: string
@@ -75,13 +76,7 @@ export default function SpiritWearModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="page-title">Spirit Wear</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage your school merchandise catalog, orders, and intake</p>
-        </div>
-      </div>
-
+      <ModuleHeader title="Spirit Wear" subtitle="Manage your school merchandise catalog, orders, and intake" gradient="gradient-rose" icon="👕" />
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="card p-5">

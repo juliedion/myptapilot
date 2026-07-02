@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ModuleHeader from '../../components/ModuleHeader'
 
 const TEMPLATES = [
   {
@@ -153,10 +154,9 @@ export default function WebsiteModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Website Templates" subtitle="Design and customize your public-facing PTO website" gradient="gradient-sky" icon="🌐" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Website Templates</h1>
-          <p className="text-slate-500 text-sm mt-1">Design and customize your public-facing PTA website</p>
         </div>
         <div className="flex gap-3">
           <button className="btn-secondary">Copy HTML</button>

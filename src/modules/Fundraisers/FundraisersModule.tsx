@@ -1,3 +1,4 @@
+import ModuleHeader from '../../components/ModuleHeader'
 import { useState } from 'react'
 import { fundraiserSuggestions } from '../../data/suggestions'
 
@@ -65,10 +66,9 @@ export default function FundraisersModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Fundraisers" subtitle="Track campaigns, explore new ideas, and manage your fundraising year" gradient="gradient-green" icon="💰" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Fundraisers</h1>
-          <p className="text-slate-500 text-sm mt-1">Track campaigns, explore new ideas, and manage your fundraising year</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="btn-primary">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>

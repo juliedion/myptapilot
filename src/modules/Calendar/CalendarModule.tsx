@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ModuleHeader from '../../components/ModuleHeader'
 import { monthlyEventSuggestions } from '../../data/suggestions'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -98,10 +99,9 @@ export default function CalendarModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Calendar & Events" subtitle="Plan, schedule, and discover event ideas for each month" gradient="gradient-cool" icon="📅" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Calendar & Events</h1>
-          <p className="text-slate-500 text-sm mt-1">Plan, schedule, and discover event ideas for each month</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex rounded-xl border border-slate-200 overflow-hidden bg-white">

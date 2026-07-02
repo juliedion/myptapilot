@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ModuleHeader from '../../components/ModuleHeader'
 import { programSuggestions } from '../../data/suggestions'
 
 interface Program {
@@ -61,10 +62,9 @@ export default function ProgramsModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Programs & Initiatives" subtitle="Launch and track programs that enrich student life" gradient="gradient-warm" icon="💡" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Programs & Initiatives</h1>
-          <p className="text-slate-500 text-sm mt-1">Organize school programs and discover proven ideas for your community</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="btn-primary">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>

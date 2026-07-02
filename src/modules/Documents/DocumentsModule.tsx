@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ModuleHeader from '../../components/ModuleHeader'
 
 interface Doc {
   id: string
@@ -71,10 +72,9 @@ export default function DocumentsModule() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
+      <ModuleHeader title="Documents & Bylaws" subtitle="Store, organize, and access all important PTO documents" gradient="gradient-sky" icon="📋" />
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Documents & Bylaws</h1>
-          <p className="text-slate-500 text-sm mt-1">Store and access all your important PTA documents</p>
         </div>
         <button onClick={() => setShowUpload(true)} className="btn-primary">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
