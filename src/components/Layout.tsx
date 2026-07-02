@@ -3,6 +3,7 @@ import Sidebar from './Sidebar'
 import Dashboard from './Dashboard'
 import Chat from '../modules/Chat/Chat'
 import CalendarModule from '../modules/Calendar/CalendarModule'
+import AIAssistant from '../modules/AI/AIAssistant'
 import DocumentsModule from '../modules/Documents/DocumentsModule'
 import ContactsModule from '../modules/Contacts/ContactsModule'
 import FundraisersModule from '../modules/Fundraisers/FundraisersModule'
@@ -45,6 +46,7 @@ export default function Layout({ activeModule, setActiveModule }: LayoutProps) {
 
     switch (activeModule) {
       case 'dashboard': return <Dashboard setActiveModule={setActiveModule} />
+      case 'ai': return <AIAssistant />
       case 'chat': return <Chat />
       case 'officer-chat': return <OfficerChat />
       case 'calendar': return <CalendarModule />

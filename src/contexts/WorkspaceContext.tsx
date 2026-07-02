@@ -16,6 +16,7 @@ export interface WorkspaceState {
   officers: Officer[]
   completedSteps: string[]
   isOnboarded: boolean
+  anthropicApiKey: string
 }
 
 const DEFAULT_STATE: WorkspaceState = {
@@ -27,6 +28,7 @@ const DEFAULT_STATE: WorkspaceState = {
   officers: [],
   completedSteps: [],
   isOnboarded: false,
+  anthropicApiKey: '',
 }
 
 interface WorkspaceContextType {
