@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import ModuleHeader from '../../components/ModuleHeader'
 import { monthlyEventSuggestions } from '../../data/suggestions'
+import SmartImport, { type ImportedEvent } from './SmartImport'
 
 const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -107,24 +108,6 @@ function exportCSV(events: CalEvent[]) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pta-calendar.csv'; a.click()
 }
 
-function parseICS(text: string): Omit<CalEvent, 'id'>[] {
-  const vevents = text.split('BEGIN:VEVENT').slice(1)
-  return vevents.map(block => {
-    const get = (key: string) => { const m = block.match(new RegExp(`${key}[^:]*:([^\r\n]+)`)); return m ? m[1].trim() : '' }
-    const dtstart = get('DTSTART')
-    const y  = parseInt(dtstart.slice(0, 4))
-    const mo = parseInt(dtstart.slice(4, 6)) - 1
-    const d  = parseInt(dtstart.slice(6, 8))
-    const hasTime = dtstart.includes('T')
-    const startMin = hasTime ? parseInt(dtstart.slice(9, 11)) * 60 + parseInt(dtstart.slice(11, 13)) : undefined
-    const cats = get('CATEGORIES').toLowerCase()
-    const type: CalEvent['type'] =
-      cats.includes('meeting') ? 'meeting' : cats.includes('fundraiser') ? 'fundraiser' : cats.includes('deadline') ? 'deadline' : 'event'
-    return { year: y, month: mo, day: d, startMin, title: get('SUMMARY') || 'Imported Event',
-      type, description: get('DESCRIPTION') || undefined, location: get('LOCATION') || undefined,
-      signupsEnabled: false, signups: [], invites: [] }
-  }).filter(e => !isNaN(e.year))
-}
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -737,7 +720,6 @@ function AddEventModal({ initYear, initMonth, onClose, onAdd }: {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function CalendarModule() {
   const today = new Date()
-  const importRef = useRef<HTMLInputElement>(null)
 
   const [view, setView]               = useState<ViewMode>('month')
   const [year, setYear]               = useState(today.getFullYear())
@@ -750,6 +732,7 @@ export default function CalendarModule() {
   const [listSearch, setListSearch]   = useState('')
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [importMsg, setImportMsg]     = useState('')
+  const [showImport, setShowImport]   = useState(false)
 
   const eventsFor = (y: number, m: number, d?: number) =>
     events.filter(e => e.year === y && e.month === m && (d == null || e.day === d))
@@ -765,17 +748,10 @@ export default function CalendarModule() {
     if (ev.month !== month || ev.year !== year) { setMonth(ev.month); setYear(ev.year) }
   }
 
-  const handleImport = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = e => {
-      const text = e.target?.result as string
-      const parsed = parseICS(text)
-      if (!parsed.length) { setImportMsg('No events found in file.'); return }
-      setEvents(p => [...p, ...parsed.map(ev => ({ ...ev, id: `imp_${Date.now()}_${Math.random()}` }))])
-      setImportMsg(`Imported ${parsed.length} event${parsed.length !== 1 ? 's' : ''}`)
-      setTimeout(() => setImportMsg(''), 4000)
-    }
-    reader.readAsText(file)
+  const handleSmartImport = (imported: ImportedEvent[]) => {
+    setEvents(p => [...p, ...imported.map(ev => ({ ...ev, id: `imp_${Date.now()}_${Math.random()}`, signups: [], invites: [], signupsEnabled: false }))])
+    setImportMsg(`Added ${imported.length} event${imported.length !== 1 ? 's' : ''} to your calendar`)
+    setTimeout(() => setImportMsg(''), 5000)
   }
 
   const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y-1) } else setMonth(m => m-1) }
@@ -1142,14 +1118,10 @@ export default function CalendarModule() {
         <ViewToggle />
         <div className="flex items-center gap-2 flex-wrap">
           <NavBar />
-          <div className="relative">
-            <button onClick={() => importRef.current?.click()} className="btn-secondary text-sm">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              Import .ics
-            </button>
-            <input ref={importRef} type="file" accept=".ics,.ical" className="hidden"
-              onChange={e=>{const f=e.target.files?.[0];if(f)handleImport(f);e.target.value=''}}/>
-          </div>
+          <button onClick={() => setShowImport(true)} className="btn-secondary text-sm">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Import Calendar
+          </button>
           <div className="relative">
             <button onClick={() => setShowExportMenu(v=>!v)} className="btn-secondary text-sm">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -1178,9 +1150,10 @@ export default function CalendarModule() {
       {view==='year'  && <YearView />}
       {view==='list'  && <ListView />}
 
-      {selected && <EventModal event={selected} onClose={closeEvent} onSave={saveEvent} onDelete={deleteEvent} />}
-      {showAdd   && <AddEventModal initYear={year} initMonth={month} onClose={() => setShowAdd(false)} onAdd={addEvent} />}
-{showExportMenu && <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />}
+      {selected   && <EventModal event={selected} onClose={closeEvent} onSave={saveEvent} onDelete={deleteEvent} />}
+      {showAdd    && <AddEventModal initYear={year} initMonth={month} onClose={() => setShowAdd(false)} onAdd={addEvent} />}
+      {showImport && <SmartImport onImport={handleSmartImport} onClose={() => setShowImport(false)} />}
+      {showExportMenu && <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />}
     </div>
   )
 }
