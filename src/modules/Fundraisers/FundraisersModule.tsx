@@ -154,10 +154,7 @@ export default function FundraisersModule() {
                           <span className="text-slate-400">Goal: ${f.goalAmount.toLocaleString()}</span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-2.5">
-                          <div
-                            className={`h-2.5 rounded-full transition-all ${f.status === 'completed' && pct >= 100 ? 'gradient-emerald' : 'gradient-brand'}`}
-                            style={{ width: `${pct}%` }}
-                          />
+                          <div className={`h-2.5 rounded-full transition-all ${f.status === 'completed' && pct >= 100 ? 'gradient-emerald' : 'gradient-brand'}`} style={{ width: `${pct}%` }} />
                         </div>
                         <p className="text-xs text-slate-400 mt-1">{pct}% of goal</p>
                       </div>
@@ -177,48 +174,73 @@ export default function FundraisersModule() {
           })}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {customIdeas.map(idea => (
-            <div key={idea.id} className="card p-5 hover:shadow-md transition-all group border-2 border-brand-100">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="badge bg-brand-100 text-brand-700 text-xs">Your Idea</span>
-                    {idea.submittedBy && <span className="text-xs text-slate-400">by {idea.submittedBy}</span>}
+        <div className="space-y-8">
+          {/* User-submitted ideas */}
+          {customIdeas.length > 0 && (
+            <div>
+              <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider mb-3">Your Ideas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {customIdeas.map(idea => (
+                  <div key={idea.id} className="card p-5 hover:shadow-md transition-all group border-2 border-brand-100">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="badge bg-brand-100 text-brand-700 text-xs">Your Idea</span>
+                          {idea.submittedBy && <span className="text-xs text-slate-400">by {idea.submittedBy}</span>}
+                        </div>
+                        <h3 className="font-bold text-slate-800 text-sm group-hover:text-brand-700">{idea.name}</h3>
+                        {idea.type && <span className="badge bg-slate-100 text-slate-500 text-xs mt-1">{idea.type}</span>}
+                      </div>
+                      <button onClick={() => setCustomIdeas(p => p.filter(i => i.id !== idea.id))} className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                    {idea.description && <p className="text-xs text-slate-500 mt-2 leading-relaxed">{idea.description}</p>}
+                    <button onClick={() => addSuggestion(idea)} className="mt-4 w-full btn-primary text-xs py-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      + Add to My Fundraisers
+                    </button>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-sm group-hover:text-brand-700">{idea.name}</h3>
-                  {idea.type && <span className="badge bg-slate-100 text-slate-500 text-xs mt-1">{idea.type}</span>}
-                </div>
-                <button onClick={() => setCustomIdeas(p => p.filter(i => i.id !== idea.id))} className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                ))}
               </div>
-              {idea.description && <p className="text-xs text-slate-500 mt-2 leading-relaxed">{idea.description}</p>}
-              <button
-                onClick={() => addSuggestion(idea)}
-                className="mt-4 w-full btn-primary text-xs py-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                + Add to My Fundraisers
-              </button>
             </div>
-          ))}
-          {fundraiserSuggestions.map((s, i) => (
-            <div key={i} className="card p-5 hover:shadow-md transition-all group">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-sm group-hover:text-brand-700">{s.name}</h3>
-                  <span className="badge bg-slate-100 text-slate-500 text-xs mt-1">{s.type}</span>
+          )}
+
+          {/* Curated ideas grouped by category */}
+          {(['Classic', 'Online', 'Event', 'Product Sale', 'Auction', 'Service'] as const).map(cat => {
+            const catIdeas = fundraiserSuggestions.filter(s => s.category === cat)
+            if (!catIdeas.length) return null
+            const catIcons: Record<string, string> = {
+              Classic: '⭐', Online: '💻', Event: '🎉', 'Product Sale': '🛍️', Auction: '🔨', Service: '🤝',
+            }
+            return (
+              <div key={cat}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">{catIcons[cat]}</span>
+                  <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">{cat}</h3>
+                  <div className="flex-1 h-px bg-slate-100" />
+                  <span className="text-xs text-slate-400">{catIdeas.length} ideas</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {catIdeas.map((s, i) => (
+                    <div key={i} className="card p-5 hover:shadow-md transition-all group flex flex-col">
+                      <div className="mb-2">
+                        <h3 className="font-bold text-slate-800 text-sm group-hover:text-brand-700 mb-2">{s.name}</h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="badge bg-slate-100 text-slate-500 text-xs">{s.type}</span>
+                          {'revenue' in s && s.revenue && <span className="badge bg-emerald-50 text-emerald-700 text-xs">💰 {s.revenue}</span>}
+                          {'season' in s && s.season && <span className="badge bg-amber-50 text-amber-700 text-xs">📅 {s.season}</span>}
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed flex-1">{s.description}</p>
+                      <button onClick={() => addSuggestion(s)} className="mt-4 w-full btn-primary text-xs py-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        + Add to My Fundraisers
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">{s.description}</p>
-              <button
-                onClick={() => addSuggestion(s)}
-                className="mt-4 w-full btn-primary text-xs py-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                + Add to My Fundraisers
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
