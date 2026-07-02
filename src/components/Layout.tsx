@@ -15,6 +15,7 @@ import OfficerChat from '../modules/Chat/OfficerChat'
 import { useAuth } from '../contexts/AuthContext'
 
 const TreasurerModule = lazy(() => import('../modules/Treasurer/TreasurerModule'))
+const StudentsModule = lazy(() => import('../modules/Students/StudentsModule'))
 
 interface LayoutProps {
   activeModule: string
@@ -54,6 +55,7 @@ export default function Layout({ activeModule, setActiveModule }: LayoutProps) {
       case 'programs': return <ProgramsModule />
       case 'clubs': return <ClubsModule />
       case 'treasurer': return <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-400">Loading…</div>}><TreasurerModule /></Suspense>
+      case 'students': return <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-400">Loading…</div>}><StudentsModule /></Suspense>
       case 'creative': return <CreativeModule />
       case 'website': return <WebsiteModule />
       default: return <Dashboard setActiveModule={setActiveModule} />

@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext'
+import { useWorkspace } from '../contexts/WorkspaceContext'
 
 interface NavItem {
   id: string
@@ -35,6 +36,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: 'Organization',
     items: [
       { id: 'contacts', label: 'Contacts', icon: <Icon path="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
+      { id: 'students', label: 'Student Directory', icon: <Icon path="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /> },
       { id: 'documents', label: 'Documents & Bylaws', icon: <Icon path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
       { id: 'clubs', label: 'Clubs', icon: <Icon path="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /> },
       { id: 'programs', label: 'Programs & Initiatives', icon: <Icon path="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /> },
@@ -75,21 +77,38 @@ interface Props {
 
 export default function Sidebar({ activeModule, setActiveModule, isOpen, setIsOpen }: Props) {
   const { user, logout } = useAuth()
+  const { workspace } = useWorkspace()
   const isOfficer = ['president', 'vp', 'secretary', 'treasurer', 'admin'].includes(user?.role || '')
 
   return (
     <aside className={`fixed left-0 top-0 h-full bg-white border-r border-slate-100 flex flex-col transition-all duration-300 z-30 shadow-sm ${isOpen ? 'w-64' : 'w-16'}`}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100">
-        <div className="w-8 h-8 rounded-xl gradient-vivid flex items-center justify-center flex-shrink-0 shadow-brand">
-          <svg className="w-4 h-4 text-white rotate-45" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2.5 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-          </svg>
+        <div className="w-8 h-8 rounded-xl flex-shrink-0 overflow-hidden">
+          {workspace.logoDataUrl ? (
+            <img src={workspace.logoDataUrl} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+          ) : (
+            <svg viewBox="0 0 24 24" className="w-8 h-8">
+              <defs>
+                <linearGradient id="sb-bg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#7c3aed"/>
+                  <stop offset="100%" stopColor="#ec4899"/>
+                </linearGradient>
+              </defs>
+              <rect width="24" height="24" rx="6" fill="url(#sb-bg)"/>
+              <line x1="12" y1="12" x2="12" y2="5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="12" y1="12" x2="18.062" y2="15.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="12" y1="12" x2="5.938" y2="15.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="12" cy="12" r="3" fill="white"/>
+              <circle cx="12" cy="5" r="2" fill="white"/>
+              <circle cx="18.062" cy="15.5" r="2" fill="white"/>
+              <circle cx="5.938" cy="15.5" r="2" fill="white"/>
+            </svg>
+          )}
         </div>
         {isOpen && (
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-slate-800 leading-tight">My PTA Pilot</p>
-            <p className="text-xs text-slate-400 truncate">Lincoln Elementary</p>
+            <p className="font-bold text-sm text-slate-800 leading-tight truncate">{workspace.orgName}</p>
           </div>
         )}
         <button

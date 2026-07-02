@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useWorkspace } from '../contexts/WorkspaceContext'
 
 interface Props {
   setActiveModule: (m: string) => void
@@ -18,13 +20,14 @@ const QUICK_LINKS = [
   { icon: '👕', label: 'Spirit Wear', sub: '12 pending orders', module: 'spiritwear', gradient: 'from-amber-400 to-orange-500' },
   { icon: '🎨', label: 'Create Flyer', sub: 'Design graphics', module: 'creative', gradient: 'from-cyan-500 to-blue-500' },
   { icon: '📋', label: 'Documents', sub: 'Bylaws & records', module: 'documents', gradient: 'from-indigo-500 to-violet-600' },
+  { icon: '🎓', label: 'Student Directory', sub: 'Student & family info', module: 'students', gradient: 'from-teal-500 to-cyan-500' },
 ]
 
 const TYPE_COLORS: Record<string, string> = {
-  meeting:   'bg-violet-100 text-violet-700',
-  event:     'bg-pink-100 text-pink-700',
-  deadline:  'bg-red-100 text-red-700',
-  fundraiser:'bg-amber-100 text-amber-700',
+  meeting:    'bg-violet-100 text-violet-700',
+  event:      'bg-pink-100 text-pink-700',
+  deadline:   'bg-red-100 text-red-700',
+  fundraiser: 'bg-amber-100 text-amber-700',
 }
 
 const UPCOMING = [
@@ -35,37 +38,117 @@ const UPCOMING = [
   { date: 'Sep 3',  title: 'Walk-A-Thon Kickoff', type: 'fundraiser' },
 ]
 
-const ACTIVITY = [
-  { text: 'New member registration: David Kim', time: '2h ago', icon: '👋' },
-  { text: 'Spirit Wear order received from Martinez family', time: '4h ago', icon: '👕' },
-  { text: 'Treasurer posted August financial report', time: '1d ago', icon: '📊' },
-  { text: 'Walk-A-Thon raised $12,400 total!', time: '2d ago', icon: '🎉' },
+const CHAT_PREVIEW = [
+  { sender: 'Sarah Mitchell', avatar: 'S', text: 'Good morning everyone! Reminder that our board meeting is this Thursday at 7pm.', time: '9:02 AM' },
+  { sender: 'Tom Rivera', avatar: 'T', text: 'Thanks Sarah! Will the Zoom link be the same as last month?', time: '9:15 AM' },
+  { sender: 'Amanda Johnson', avatar: 'A', text: 'Yes same link — it\'s pinned in the Documents section. Also don\'t forget Walk-A-Thon pledge forms!', time: '9:22 AM' },
 ]
 
-const TIPS = [
-  'Start planning Fall Carnival now — it takes 3 months to organize well.',
-  'The IRS 990-N filing deadline is May 15. Mark your calendar now.',
-  'Restaurant Night fundraisers average $500–$1,200 with zero upfront cost.',
-  'Set up a shared folder for all event committees to share files easily.',
+const SETUP_STEPS = [
+  { id: 'setup-workspace',   label: 'Set up your workspace name & colors', module: '' },
+  { id: 'add-officers',      label: 'Add your officers to the team', module: '' },
+  { id: 'populate-calendar', label: 'Populate the calendar for the school year', module: 'calendar' },
+  { id: 'plan-events',       label: 'Plan your first event', module: 'calendar' },
+  { id: 'first-fundraiser',  label: 'Set up your first fundraiser', module: 'fundraisers' },
+  { id: 'add-contacts',      label: 'Add member contacts & student directory', module: 'contacts' },
+  { id: 'upload-docs',       label: 'Upload bylaws and key documents', module: 'documents' },
+  { id: 'first-agenda',      label: 'Create your first meeting agenda', module: '' },
 ]
-const TIP = TIPS[0]
+
+const AVATAR_COLORS = ['from-violet-500 to-purple-600', 'from-pink-500 to-rose-500', 'from-teal-500 to-cyan-500']
 
 export default function Dashboard({ setActiveModule }: Props) {
   const { user } = useAuth()
+  const { workspace, completeStep, updateWorkspace } = useWorkspace()
   const firstName = user?.name.split(' ')[0]
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  const [chatInput, setChatInput] = useState('')
+  const [ideaText, setIdeaText] = useState('')
+  const [showIdeaBox, setShowIdeaBox] = useState(false)
+  const [ideaSaved, setIdeaSaved] = useState(false)
+
+  const completedCount = workspace.completedSteps.length
+  const totalSteps = SETUP_STEPS.length
+  const showGuide = !workspace.isOnboarded || completedCount < totalSteps
+
+  const handleStepClick = (step: typeof SETUP_STEPS[0]) => {
+    completeStep(step.id)
+    if (step.module) setActiveModule(step.module)
+  }
+
+  const handleSaveIdea = () => {
+    console.log('Idea saved:', ideaText)
+    setIdeaSaved(true)
+    setIdeaText('')
+    setTimeout(() => { setIdeaSaved(false); setShowIdeaBox(false) }, 2000)
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in space-y-6">
 
-      {/* Hero Banner */}
+      {/* A) Setup Guide */}
+      {showGuide && (
+        <div className="gradient-vivid rounded-3xl p-6 relative overflow-hidden shadow-brand">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-white font-bold text-lg">Getting Started Checklist</h2>
+              <div className="flex items-center gap-3">
+                <span className="text-white/70 text-sm font-medium">{completedCount} of {totalSteps} complete</span>
+                <button
+                  onClick={() => updateWorkspace({ isOnboarded: true })}
+                  className="text-white/50 hover:text-white/80 text-xs underline transition-colors"
+                >
+                  Dismiss guide
+                </button>
+              </div>
+            </div>
+            <div className="h-2 bg-white/20 rounded-full mb-5 overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all duration-500"
+                style={{ width: `${(completedCount / totalSteps) * 100}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {SETUP_STEPS.map((step, idx) => {
+                const done = workspace.completedSteps.includes(step.id)
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => handleStepClick(step)}
+                    className="flex items-center gap-3 text-left p-2.5 rounded-xl hover:bg-white/10 transition-colors"
+                  >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                      done ? 'bg-green-400' : 'border-2 border-white/40'
+                    }`}>
+                      {done ? (
+                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <span className="text-white/50 text-[10px] font-bold">{idx + 1}</span>
+                      )}
+                    </div>
+                    <span className={`text-sm ${done ? 'text-white/50 line-through' : 'text-white/90'}`}>
+                      {step.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* B) Hero Banner */}
       <div className="rounded-3xl gradient-vivid p-8 relative overflow-hidden shadow-brand">
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full" />
         <div className="absolute -bottom-10 right-24 w-36 h-36 bg-white/10 rounded-full" />
         <div className="relative">
           <p className="text-white/60 text-sm font-medium mb-1">{dateStr}</p>
           <h1 className="text-3xl font-bold text-white mb-1">Good morning, {firstName}! 👋</h1>
-          <p className="text-white/70 text-sm">Lincoln Elementary PTA · School Year 2025–2026</p>
+          <p className="text-white/70 text-sm">{workspace.orgName} · School Year 2025–2026</p>
           <div className="flex gap-3 mt-5">
             <button onClick={() => setActiveModule('calendar')} className="bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl backdrop-blur-sm transition-all">
               View Calendar
@@ -77,7 +160,7 @@ export default function Dashboard({ setActiveModule }: Props) {
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* C) Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STATS.map(s => (
           <div key={s.label} className={`${s.gradient} rounded-2xl p-5 text-white relative overflow-hidden shadow-card`}>
@@ -90,8 +173,9 @@ export default function Dashboard({ setActiveModule }: Props) {
         ))}
       </div>
 
+      {/* D) Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upcoming Events */}
+        {/* Left: Upcoming Events */}
         <div className="lg:col-span-2 card p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="section-title">Upcoming Events</h2>
@@ -113,39 +197,101 @@ export default function Dashboard({ setActiveModule }: Props) {
           </div>
         </div>
 
-        {/* Right column */}
+        {/* Right: Mini Chat + Idea Quick-Add */}
         <div className="space-y-4">
-          {/* Activity */}
+          {/* Mini Group Chat */}
           <div className="card p-5">
-            <h2 className="section-title mb-4">Recent Activity</h2>
-            <div className="space-y-3">
-              {ACTIVITY.map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-sm flex-shrink-0">{item.icon}</div>
-                  <div>
-                    <p className="text-sm text-slate-700 leading-snug">{item.text}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{item.time}</p>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="section-title">Community Chat</h2>
+              <button onClick={() => setActiveModule('chat')} className="text-xs text-brand-600 hover:text-brand-700 font-semibold">
+                Open Chat →
+              </button>
+            </div>
+            <div className="space-y-3 overflow-hidden">
+              {CHAT_PREVIEW.map((msg, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                    {msg.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xs font-semibold text-slate-700 truncate">{msg.sender}</span>
+                      <span className="text-[10px] text-slate-400 flex-shrink-0">{msg.time}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{msg.text}</p>
                   </div>
                 </div>
               ))}
             </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                className="input text-sm flex-1 py-1.5"
+                placeholder="Say something…"
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && setActiveModule('chat')}
+              />
+              <button
+                onClick={() => setActiveModule('chat')}
+                className="w-8 h-8 rounded-lg gradient-vivid flex items-center justify-center flex-shrink-0"
+                title="Open full chat"
+              >
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* Tip */}
-          <div className="rounded-2xl gradient-cool p-5 text-white relative overflow-hidden shadow-card">
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-            <div className="relative">
-              <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-2">💡 Pro Tip</p>
-              <p className="text-sm text-white/90 leading-relaxed">{TIP}</p>
+          {/* Idea Quick-Add */}
+          <div className="card p-5">
+            <h2 className="section-title mb-3">Quick Ideas</h2>
+            <div className="space-y-2">
+              <button
+                onClick={() => setActiveModule('programs')}
+                className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 text-sm font-medium transition-colors"
+              >
+                <span>💡</span> Add Program Idea
+              </button>
+              <button
+                onClick={() => setActiveModule('fundraisers')}
+                className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium transition-colors"
+              >
+                <span>💰</span> Add Fundraiser Idea
+              </button>
+              <button
+                onClick={() => setShowIdeaBox(v => !v)}
+                className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium transition-colors"
+              >
+                <span>✨</span> General Idea
+              </button>
+              {showIdeaBox && (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    className="input text-sm resize-none"
+                    rows={2}
+                    placeholder="Type your idea…"
+                    value={ideaText}
+                    onChange={e => setIdeaText(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveIdea} className="btn-primary text-xs py-1.5 flex-1">
+                      {ideaSaved ? '✓ Saved!' : 'Save'}
+                    </button>
+                    <button onClick={() => setShowIdeaBox(false)} className="btn-secondary text-xs py-1.5">Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Access */}
+      {/* E) Quick Access */}
       <div>
         <h2 className="section-title mb-4">Quick Access</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-7 gap-3">
           {QUICK_LINKS.map(q => (
             <button
               key={q.module}
@@ -162,7 +308,7 @@ export default function Dashboard({ setActiveModule }: Props) {
         </div>
       </div>
 
-      {/* Fundraiser Progress */}
+      {/* F) Active Fundraisers */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="section-title">Active Fundraisers</h2>
