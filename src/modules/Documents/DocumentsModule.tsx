@@ -21,22 +21,14 @@ const CATEGORIES = [
   { id: 'other', label: 'Other' },
 ]
 
-const SEED_DOCS: Doc[] = [
-  { id: '1', name: 'PTA Bylaws 2024-2025.pdf', category: 'bylaws', uploadedBy: 'Sarah Mitchell', uploadedAt: 'Aug 15, 2024', size: '284 KB', icon: '📜' },
-  { id: '2', name: 'Standing Rules & Procedures.pdf', category: 'bylaws', uploadedBy: 'Sarah Mitchell', uploadedAt: 'Aug 15, 2024', size: '148 KB', icon: '📜' },
-  { id: '3', name: 'IRS 501(c)(3) Determination Letter.pdf', category: 'legal', uploadedBy: 'Michael Chen', uploadedAt: 'Jan 10, 2023', size: '512 KB', icon: '🏛️' },
-  { id: '4', name: 'EIN Letter from IRS.pdf', category: 'legal', uploadedBy: 'Michael Chen', uploadedAt: 'Mar 5, 2021', size: '98 KB', icon: '🏛️' },
-  { id: '5', name: 'Form 990-N Filing 2023-2024.pdf', category: 'legal', uploadedBy: 'Michael Chen', uploadedAt: 'Apr 30, 2024', size: '66 KB', icon: '📋' },
-  { id: '6', name: 'Meeting Minutes — June 2025.docx', category: 'minutes', uploadedBy: 'Jessica Park', uploadedAt: 'Jun 18, 2025', size: '42 KB', icon: '📝' },
-  { id: '7', name: 'Meeting Minutes — May 2025.docx', category: 'minutes', uploadedBy: 'Jessica Park', uploadedAt: 'May 21, 2025', size: '38 KB', icon: '📝' },
-  { id: '8', name: 'Meeting Minutes — April 2025.docx', category: 'minutes', uploadedBy: 'Jessica Park', uploadedAt: 'Apr 16, 2025', size: '44 KB', icon: '📝' },
-  { id: '9', name: 'Annual Budget 2025-2026.xlsx', category: 'financial', uploadedBy: 'Michael Chen', uploadedAt: 'Jul 1, 2025', size: '108 KB', icon: '📊' },
-  { id: '10', name: 'Q2 Financial Report 2024-2025.pdf', category: 'financial', uploadedBy: 'Michael Chen', uploadedAt: 'Jan 15, 2025', size: '215 KB', icon: '📊' },
-  { id: '11', name: 'Walk-A-Thon Pledge Form.pdf', category: 'forms', uploadedBy: 'Amanda Johnson', uploadedAt: 'Aug 20, 2025', size: '89 KB', icon: '📄' },
-  { id: '12', name: 'Volunteer Application Form.pdf', category: 'forms', uploadedBy: 'Tom Rivera', uploadedAt: 'Aug 1, 2025', size: '54 KB', icon: '📄' },
-  { id: '13', name: 'Membership Registration Form 2025.pdf', category: 'forms', uploadedBy: 'Sarah Mitchell', uploadedAt: 'Jul 30, 2025', size: '72 KB', icon: '📄' },
-  { id: '14', name: 'School Calendar 2025-2026.pdf', category: 'other', uploadedBy: 'Jessica Park', uploadedAt: 'Jul 5, 2025', size: '1.2 MB', icon: '📅' },
-  { id: '15', name: 'Insurance Certificate 2025.pdf', category: 'legal', uploadedBy: 'Sarah Mitchell', uploadedAt: 'Sep 1, 2024', size: '445 KB', icon: '🛡️' },
+const SEED_DOCS: Doc[] = []
+
+const DOC_PROMPTS = [
+  { category: 'bylaws',    icon: '📜', label: 'Bylaws & Governance',  hint: 'Upload your PTA/PTO bylaws and standing rules' },
+  { category: 'legal',     icon: '🏛️', label: 'Legal & Tax Docs',     hint: 'IRS determination letter, EIN, Form 990-N' },
+  { category: 'minutes',   icon: '📝', label: 'Meeting Minutes',       hint: 'Upload minutes after each board or general meeting' },
+  { category: 'financial', icon: '📊', label: 'Financial Reports',     hint: 'Annual budget, quarterly reports' },
+  { category: 'forms',     icon: '📄', label: 'Forms & Templates',     hint: 'Volunteer forms, membership forms, permission slips' },
 ]
 
 export default function DocumentsModule() {
@@ -138,7 +130,23 @@ export default function DocumentsModule() {
               <div className="col-span-1">Date</div>
               <div className="col-span-1 text-right">Size</div>
             </div>
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && docs.length === 0 ? (
+              <div className="p-8">
+                <p className="text-center text-slate-500 font-semibold mb-6">Get your document vault started — here's what to upload first:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {DOC_PROMPTS.map(p => (
+                    <button key={p.category} onClick={() => { setNewDoc({ name: '', category: p.category }); setShowUpload(true) }}
+                      className="flex items-start gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-400 hover:bg-brand-50 transition-all text-left group">
+                      <span className="text-2xl flex-shrink-0">{p.icon}</span>
+                      <div>
+                        <p className="font-semibold text-slate-700 group-hover:text-brand-700 text-sm">{p.label}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{p.hint}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="text-center py-12 text-slate-400">
                 <p className="text-4xl mb-3">📂</p>
                 <p className="text-sm">No documents found</p>

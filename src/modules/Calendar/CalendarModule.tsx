@@ -61,22 +61,7 @@ type ViewMode = 'month' | 'day' | 'year' | 'list'
 
 const seed = (e: Omit<CalEvent, 'signups' | 'invites'>): CalEvent => ({ ...e, signups: [], invites: [] })
 
-const SEED_EVENTS: CalEvent[] = [
-  seed({ id: '1',  year: 2025, month: 6,  day: 10, startMin: 18*60,    endMin: 19*60,   title: 'Board Meeting',          type: 'meeting',    description: 'Monthly board meeting', location: 'Zoom', googleMeet: true, signupsEnabled: false }),
-  seed({ id: '2',  year: 2025, month: 6,  day: 22, startMin: 17*60,                     title: 'Summer Planning',        type: 'meeting',    signupsEnabled: false }),
-  seed({ id: '3',  year: 2025, month: 6,  day: 30,                                      title: 'Walk-A-Thon End',        type: 'deadline',   signupsEnabled: false }),
-  seed({ id: '4',  year: 2025, month: 7,  day:  5, startMin: 18*60,    endMin: 20*60,   title: 'Back-to-School Night',   type: 'event',      description: 'Welcome families to the new school year', location: 'School Gymnasium', signupsEnabled: true, maxSignups: 300 }),
-  seed({ id: '5',  year: 2025, month: 7,  day: 12,                                      title: 'Spirit Wear Deadline',   type: 'deadline',   signupsEnabled: false }),
-  seed({ id: '6',  year: 2025, month: 7,  day: 20, startMin: 11*60,                     title: 'Welcome Picnic',         type: 'event',      location: 'School Grounds', signupsEnabled: true, maxSignups: 50 }),
-  seed({ id: '7',  year: 2025, month: 7,  day: 26, startMin: 19*60,    endMin: 20*60,   title: 'First PTO Meeting',      type: 'meeting',    location: 'Library', signupsEnabled: false }),
-  seed({ id: '8',  year: 2025, month: 8,  day:  3, startMin:  8*60,                     title: 'Walk-A-Thon Kickoff',    type: 'fundraiser', description: 'Kick off our biggest fundraiser', signupsEnabled: true, maxSignups: 100 }),
-  seed({ id: '9',  year: 2025, month: 8,  day: 15, startMin:  9*60,                     title: 'Picture Day',            type: 'event',      signupsEnabled: false }),
-  seed({ id: '10', year: 2025, month: 8,  day: 23, startMin: 18*60+30, endMin: 19*60+30,title: 'General Meeting',        type: 'meeting',    googleMeet: true, signupsEnabled: false }),
-  seed({ id: '11', year: 2025, month: 9,  day: 18, startMin: 17*60,    endMin: 21*60,   title: 'Fall Carnival',          type: 'event',      description: 'Annual fall carnival with games and food', location: 'School Grounds', signupsEnabled: true, maxSignups: 200 }),
-  seed({ id: '12', year: 2025, month: 9,  day:  1, startMin:  9*60,                     title: 'Box Tops Drive Starts',  type: 'fundraiser', signupsEnabled: false }),
-  seed({ id: '13', year: 2025, month: 10, day: 11, startMin: 19*60+15, endMin: 20*60+15,title: 'November Board Meeting', type: 'meeting',    googleMeet: true, signupsEnabled: false }),
-  seed({ id: '14', year: 2025, month: 11, day: 14, startMin: 10*60,                     title: 'Holiday Shop',           type: 'fundraiser', signupsEnabled: true, maxSignups: 30 }),
-]
+const SEED_EVENTS: CalEvent[] = []
 
 const TYPE = {
   meeting:    { bg: 'bg-blue-100',   text: 'text-blue-700',   dot: 'bg-blue-500',   border: 'border-blue-200',   gradient: 'from-blue-500 to-blue-600',    pill: 'bg-blue-600' },

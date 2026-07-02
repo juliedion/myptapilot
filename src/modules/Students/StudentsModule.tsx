@@ -13,20 +13,7 @@ interface Student {
   notes?: string
 }
 
-const SEED_STUDENTS: Student[] = [
-  { id: '1', firstName: 'Emma', lastName: 'Thornton', grade: 'K', teacher: 'Ms. Johnson', parentName: 'Rachel Thornton', parentEmail: 'rthornton@email.com', parentPhone: '(518) 555-0142' },
-  { id: '2', firstName: 'Liam', lastName: 'Okafor', grade: 'K', teacher: 'Ms. Johnson', parentName: 'David Okafor', parentEmail: 'dokafor@email.com', parentPhone: '(518) 555-0278' },
-  { id: '3', firstName: 'Sophia', lastName: 'Martinez', grade: '1', teacher: 'Mr. Patel', parentName: 'Carmen Martinez', parentEmail: 'cmartinez@email.com', parentPhone: '(518) 555-0361' },
-  { id: '4', firstName: 'Noah', lastName: 'Chen', grade: '1', teacher: 'Mr. Patel', parentName: 'Grace Chen', parentEmail: 'gchen@email.com', parentPhone: '(518) 555-0419' },
-  { id: '5', firstName: 'Ava', lastName: 'Williams', grade: '2', teacher: 'Ms. Rodriguez', parentName: 'Marcus Williams', parentEmail: 'mwilliams@email.com', parentPhone: '(518) 555-0537' },
-  { id: '6', firstName: 'Jackson', lastName: 'Kim', grade: '2', teacher: 'Ms. Rodriguez', parentName: 'Susan Kim', parentEmail: 'skim@email.com', parentPhone: '(518) 555-0683' },
-  { id: '7', firstName: 'Olivia', lastName: 'Nguyen', grade: '3', teacher: 'Mrs. Kim', parentName: 'Peter Nguyen', parentEmail: 'pnguyen@email.com', parentPhone: '(518) 555-0724' },
-  { id: '8', firstName: 'Ethan', lastName: 'Brooks', grade: '3', teacher: 'Mrs. Kim', parentName: 'Diane Brooks', parentEmail: 'dbrooks@email.com', parentPhone: '(518) 555-0815' },
-  { id: '9', firstName: 'Isabella', lastName: 'Patel', grade: '4', teacher: 'Mr. Thompson', parentName: 'Raj Patel', parentEmail: 'rpatel@email.com', parentPhone: '(518) 555-0963' },
-  { id: '10', firstName: 'Mason', lastName: 'Rivera', grade: '4', teacher: 'Mr. Thompson', parentName: 'Elena Rivera', parentEmail: 'erivera@email.com', parentPhone: '(518) 555-0104' },
-  { id: '11', firstName: 'Mia', lastName: 'Johnson', grade: '5', teacher: 'Ms. Williams', parentName: 'Thomas Johnson', parentEmail: 'tjohnson@email.com', parentPhone: '(518) 555-0195' },
-  { id: '12', firstName: 'Lucas', lastName: 'Hernandez', grade: '5', teacher: 'Ms. Williams', parentName: 'Maria Hernandez', parentEmail: 'mhernandez@email.com', parentPhone: '(518) 555-0236' },
-]
+const SEED_STUDENTS: Student[] = []
 
 const GRADES = ['K', '1', '2', '3', '4', '5', '6']
 const TEACHERS = ['Ms. Johnson', 'Mr. Patel', 'Ms. Rodriguez', 'Mrs. Kim', 'Mr. Thompson', 'Ms. Williams']
@@ -223,8 +210,18 @@ export default function StudentsModule() {
         </div>
       </div>
 
+      {/* Empty state */}
+      {students.length === 0 && (
+        <div className="card p-12 text-center mb-6">
+          <div className="w-16 h-16 gradient-cool rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">🎓</div>
+          <h3 className="font-bold text-slate-800 text-lg mb-2">No students yet</h3>
+          <p className="text-slate-500 text-sm mb-5 max-w-sm mx-auto">Add students to build your directory. You can track grade, teacher, and parent contact info for each student.</p>
+          <button onClick={() => setModalStudent('new')} className="btn-primary justify-center">Add First Student</button>
+        </div>
+      )}
+
       {/* Table */}
-      <div className="card overflow-hidden">
+      {students.length > 0 && <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -308,7 +305,7 @@ export default function StudentsModule() {
         <div className="px-4 py-3 border-t border-slate-100 text-xs text-slate-400">
           Showing {filtered.length} of {students.length} students
         </div>
-      </div>
+      </div>}
 
       {modalStudent !== null && (
         <StudentModal

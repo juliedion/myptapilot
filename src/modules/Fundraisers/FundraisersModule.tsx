@@ -15,12 +15,7 @@ interface Fundraiser {
   vendor?: string
 }
 
-const SEED: Fundraiser[] = [
-  { id: '1', name: 'Walk-A-Thon 2025', type: 'Pledge-Based', status: 'active', goalAmount: 15000, raisedAmount: 12400, startDate: '2025-09-03', endDate: '2025-07-30', description: 'Annual walk-a-thon where students collect pledges per lap around the track.', vendor: 'FundraisingPro' },
-  { id: '2', name: 'Fall Carnival 2025', type: 'Event', status: 'planned', goalAmount: 8000, raisedAmount: 2800, startDate: '2025-10-18', endDate: '2025-10-18', description: 'Annual fall carnival with games, food, and fun for the whole family.' },
-  { id: '3', name: 'Spring Book Fair', type: 'Retail', status: 'completed', goalAmount: 5000, raisedAmount: 5820, startDate: '2025-03-10', endDate: '2025-03-14', description: 'Scholastic Book Fair held in the school library.', vendor: 'Scholastic' },
-  { id: '4', name: 'Restaurant Night — Chipotle', type: 'Restaurant Partnership', status: 'completed', goalAmount: 600, raisedAmount: 847, startDate: '2025-02-11', endDate: '2025-02-11', description: '40% of proceeds donated to Lincoln Elementary PTA.' },
-]
+const SEED: Fundraiser[] = []
 
 const statusConfig = {
   planned: { color: 'bg-blue-100 text-blue-700', label: 'Planned' },
@@ -30,7 +25,7 @@ const statusConfig = {
 
 export default function FundraisersModule() {
   const [fundraisers, setFundraisers] = useState(SEED)
-  const [tab, setTab] = useState<'active' | 'ideas'>('active')
+  const [tab, setTab] = useState<'active' | 'ideas'>(SEED.length === 0 ? 'ideas' : 'active')
   const [showAdd, setShowAdd] = useState(false)
   const [selectedSuggestion, setSelectedSuggestion] = useState<typeof fundraiserSuggestions[0] | null>(null)
   const [form, setForm] = useState({ name: '', type: '', goalAmount: '', startDate: '', endDate: '', description: '', vendor: '' })
@@ -110,6 +105,14 @@ export default function FundraisersModule() {
 
       {tab === 'active' ? (
         <div className="space-y-4">
+          {fundraisers.length === 0 && (
+            <div className="card p-12 text-center">
+              <div className="w-16 h-16 gradient-green rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">💰</div>
+              <h3 className="font-bold text-slate-800 text-lg mb-2">No fundraisers yet</h3>
+              <p className="text-slate-500 text-sm mb-5 max-w-sm mx-auto">Browse the Ideas tab to find a fundraiser that fits your school, then add it here to start tracking.</p>
+              <button onClick={() => setTab('ideas')} className="btn-primary justify-center">Browse Fundraiser Ideas →</button>
+            </div>
+          )}
           {fundraisers.map(f => {
             const pct = Math.min(100, Math.round((f.raisedAmount / f.goalAmount) * 100))
             const cfg = statusConfig[f.status]

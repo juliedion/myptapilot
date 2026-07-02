@@ -12,22 +12,7 @@ interface Contact {
   committee?: string
 }
 
-const SEED: Contact[] = [
-  { id: '1', name: 'Sarah Mitchell', email: 'smitchell@email.com', phone: '(555) 234-5678', role: 'PTA President', type: 'officer', committee: 'Executive Board' },
-  { id: '2', name: 'Tom Rivera', email: 'trivera@email.com', phone: '(555) 345-6789', role: 'Vice President', type: 'officer', committee: 'Executive Board' },
-  { id: '3', name: 'Jessica Park', email: 'jpark@email.com', phone: '(555) 456-7890', role: 'Secretary', type: 'officer', committee: 'Executive Board' },
-  { id: '4', name: 'Michael Chen', email: 'mchen@email.com', phone: '(555) 567-8901', role: 'Treasurer', type: 'officer', committee: 'Executive Board' },
-  { id: '5', name: 'Amanda Johnson', email: 'ajohnson@email.com', phone: '(555) 678-9012', role: 'Fundraising Chair', type: 'officer', committee: 'Fundraising' },
-  { id: '6', name: 'David Kim', email: 'dkim@email.com', phone: '(555) 789-0123', role: 'Events Chair', type: 'officer', committee: 'Events' },
-  { id: '7', name: 'Maria Gonzalez', email: 'mgonzalez@email.com', phone: '(555) 890-1234', role: 'Parent Member', type: 'parent', grade: '3rd' },
-  { id: '8', name: 'Robert Thompson', email: 'rthompson@email.com', phone: '(555) 901-2345', role: 'Parent Member', type: 'parent', grade: 'K' },
-  { id: '9', name: 'Linda Wu', email: 'lwu@email.com', phone: '(555) 012-3456', role: 'Parent Member', type: 'parent', grade: '5th' },
-  { id: '10', name: 'James Carter', email: 'jcarter@email.com', phone: '(555) 123-4567', role: 'Parent Member', type: 'parent', grade: '1st' },
-  { id: '11', name: 'Ms. Patricia Brown', email: 'pbrown@lincoln.edu', phone: '(555) 234-5679', role: '2nd Grade Teacher', type: 'teacher' },
-  { id: '12', name: 'Mr. Kevin Davis', email: 'kdavis@lincoln.edu', phone: '(555) 345-6780', role: '4th Grade Teacher', type: 'teacher' },
-  { id: '13', name: 'PrintPro Solutions', email: 'orders@printpro.com', phone: '(555) 456-7891', role: 'Spirit Wear Vendor', type: 'vendor' },
-  { id: '14', name: 'Fun Events Rentals', email: 'info@funevents.com', phone: '(555) 567-8902', role: 'Carnival Equipment', type: 'vendor' },
-]
+const SEED: Contact[] = []
 
 const TYPE_CONFIG = {
   officer: { label: 'Officers', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500' },
@@ -103,6 +88,17 @@ export default function ContactsModule() {
             <input className="input pl-9" placeholder="Search by name, email, or role…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="space-y-2">
+            {contacts.length === 0 && (
+              <div className="card p-12 text-center">
+                <div className="w-16 h-16 gradient-vivid rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">👥</div>
+                <h3 className="font-bold text-slate-800 text-lg mb-2">Your contact list is empty</h3>
+                <p className="text-slate-500 text-sm mb-5 max-w-sm mx-auto">Add your officers, parent members, teachers, and vendors to build your directory.</p>
+                <button onClick={() => setShowAdd(true)} className="btn-primary justify-center">Add First Contact</button>
+              </div>
+            )}
+            {filtered.length === 0 && contacts.length > 0 && (
+              <div className="card p-8 text-center"><p className="text-slate-400">No contacts match your search.</p></div>
+            )}
             {filtered.map(contact => {
               const cfg = TYPE_CONFIG[contact.type]
               return (

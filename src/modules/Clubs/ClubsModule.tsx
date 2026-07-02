@@ -14,13 +14,7 @@ interface Club {
   status: 'proposed' | 'active' | 'inactive'
 }
 
-const SEED: Club[] = [
-  { id: '1', name: 'STEM Club', type: 'Academic', description: 'Hands-on science and engineering projects every other week.', advisor: 'Ms. Patricia Brown', meetingDay: 'Wednesday', meetingTime: '3:30 PM', memberCount: 24, status: 'active' },
-  { id: '2', name: 'Art Club', type: 'Arts', description: 'Explore various media — painting, sculpture, mixed media, and more.', advisor: 'Mr. Kevin Davis', meetingDay: 'Thursday', meetingTime: '3:30 PM', memberCount: 18, status: 'active' },
-  { id: '3', name: 'Robotics Club', type: 'STEM', description: 'Build and program LEGO robots. Participate in regional competitions.', meetingDay: 'Tuesday', meetingTime: '4:00 PM', memberCount: 12, status: 'active' },
-  { id: '4', name: 'Garden Club', type: 'Nature', description: 'Tend the school garden, learn about plants, sustainability, and nutrition.', memberCount: 8, status: 'proposed' },
-  { id: '5', name: 'Chess Club', type: 'Academic', description: 'Learn strategy, compete, and have fun.', advisor: 'Ms. Patricia Brown', meetingDay: 'Monday', meetingTime: '3:30 PM', memberCount: 15, status: 'active' },
-]
+const SEED: Club[] = []
 
 const STATUS_CONFIG = {
   proposed: { color: 'bg-yellow-100 text-yellow-700', label: 'Proposed' },
@@ -36,7 +30,7 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default function ClubsModule() {
   const [clubs, setClubs] = useState(SEED)
-  const [tab, setTab] = useState<'clubs' | 'ideas'>('clubs')
+  const [tab, setTab] = useState<'clubs' | 'ideas'>(SEED.length === 0 ? 'ideas' : 'clubs')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', type: 'Academic', description: '', advisor: '', meetingDay: '', meetingTime: '', memberCount: '' })
 
@@ -95,6 +89,14 @@ export default function ClubsModule() {
 
       {tab === 'clubs' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {clubs.length === 0 && (
+            <div className="col-span-3 card p-12 text-center">
+              <div className="w-16 h-16 gradient-teal rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">🌟</div>
+              <h3 className="font-bold text-slate-800 text-lg mb-2">No clubs yet</h3>
+              <p className="text-slate-500 text-sm mb-5 max-w-sm mx-auto">Browse the Club Ideas tab for inspiration — STEM Club, Robotics, Garden Club, and more.</p>
+              <button onClick={() => setTab('ideas')} className="btn-primary justify-center">Browse Club Ideas →</button>
+            </div>
+          )}
           {clubs.map(club => {
             const emoji = TYPE_EMOJI[club.type] || '⭐'
             const status = STATUS_CONFIG[club.status]

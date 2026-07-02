@@ -12,12 +12,7 @@ interface Program {
   lead?: string
 }
 
-const SEED: Program[] = [
-  { id: '1', name: 'Reflections Arts Program', category: 'arts', description: 'National PTA Reflections program encouraging student creativity through visual art, music, photography, and writing.', status: 'active', budget: 500, lead: 'Amanda Johnson' },
-  { id: '2', name: 'Anti-Bullying Initiative', category: 'wellness', description: 'School-wide kindness campaign including assemblies, buddy systems, and classroom discussions.', status: 'active', budget: 800, lead: 'Tom Rivera' },
-  { id: '3', name: 'Family STEM Nights', category: 'stem', description: 'Monthly evening events where families explore hands-on STEM challenges together.', status: 'planning', budget: 1200, lead: 'Michael Chen' },
-  { id: '4', name: 'Author Speaker Series', category: 'academic', description: 'Quarterly author visits to inspire a love of reading and writing.', status: 'idea', budget: 2000 },
-]
+const SEED: Program[] = []
 
 const CATEGORY_CONFIG: Record<string, { color: string; emoji: string }> = {
   academic: { color: 'bg-blue-100 text-blue-700', emoji: '📚' },
@@ -36,7 +31,7 @@ const STATUS_CONFIG = {
 
 export default function ProgramsModule() {
   const [programs, setPrograms] = useState(SEED)
-  const [tab, setTab] = useState<'programs' | 'ideas'>('programs')
+  const [tab, setTab] = useState<'programs' | 'ideas'>(SEED.length === 0 ? 'ideas' : 'programs')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', category: 'academic', description: '', status: 'idea' as Program['status'], budget: '', lead: '' })
@@ -92,6 +87,14 @@ export default function ProgramsModule() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {programs.length === 0 && (
+              <div className="col-span-2 card p-12 text-center">
+                <div className="w-16 h-16 gradient-warm rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">💡</div>
+                <h3 className="font-bold text-slate-800 text-lg mb-2">No programs yet</h3>
+                <p className="text-slate-500 text-sm mb-5 max-w-sm mx-auto">Check out the Suggested Programs tab for ideas like Reflections, STEM Night, and more.</p>
+                <button onClick={() => setTab('ideas')} className="btn-primary justify-center">Browse Program Ideas →</button>
+              </div>
+            )}
             {filtered.map(prog => {
               const cat = CATEGORY_CONFIG[prog.category] || { color: 'bg-slate-100 text-slate-600', emoji: '📌' }
               const status = STATUS_CONFIG[prog.status]

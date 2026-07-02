@@ -28,13 +28,7 @@ const PRODUCTS = [
   { name: 'Sticker Pack (5ct)', sizes: ['Standard'], colors: ['Full Color'], price: 5 },
 ]
 
-const SEED_ORDERS: Order[] = [
-  { id: '1', name: 'Maria Gonzalez', email: 'mgonzalez@email.com', items: [{ name: 'Spirit T-Shirt', size: 'M', color: 'Navy Blue', qty: 2, price: 18 }, { name: 'Youth T-Shirt', size: 'YS', color: 'Navy Blue', qty: 1, price: 15 }], total: 51, status: 'paid', date: '2025-07-10' },
-  { id: '2', name: 'Robert Thompson', email: 'rthompson@email.com', items: [{ name: 'Hoodie Sweatshirt', size: 'L', color: 'Gray', qty: 1, price: 35 }], total: 35, status: 'fulfilled', date: '2025-07-08' },
-  { id: '3', name: 'Linda Wu', email: 'lwu@email.com', items: [{ name: 'Spirit T-Shirt', size: 'S', color: 'White', qty: 1, price: 18 }, { name: 'Baseball Cap', size: 'One Size', color: 'Navy Blue', qty: 1, price: 22 }], total: 40, status: 'pending', date: '2025-07-12' },
-  { id: '4', name: 'James Carter', email: 'jcarter@email.com', items: [{ name: 'Youth T-Shirt', size: 'YM', color: 'Navy Blue', qty: 3, price: 15 }], total: 45, status: 'pending', date: '2025-07-13' },
-  { id: '5', name: 'Amanda Johnson', email: 'ajohnson@email.com', items: [{ name: 'Hoodie Sweatshirt', size: 'M', color: 'Navy Blue', qty: 1, price: 35 }, { name: 'Water Bottle', size: '20oz', color: 'Navy Blue', qty: 2, price: 16 }], total: 67, status: 'shipped', date: '2025-07-05' },
-]
+const SEED_ORDERS: Order[] = []
 
 const statusConfig = {
   pending: { color: 'bg-yellow-100 text-yellow-700', label: 'Pending' },
@@ -115,6 +109,17 @@ export default function SpiritWearModule() {
               </button>
             ))}
           </div>
+          {orders.length === 0 ? (
+            <div className="card p-12 text-center">
+              <div className="w-16 h-16 gradient-rose rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">👕</div>
+              <h3 className="font-bold text-slate-800 text-lg mb-2">No orders yet</h3>
+              <p className="text-slate-500 text-sm mb-5 max-w-sm mx-auto">Browse the Catalog to see what's available, or use New Order to take your first spirit wear order.</p>
+              <div className="flex gap-3 justify-center">
+                <button onClick={() => setTab('catalog')} className="btn-secondary">Browse Catalog</button>
+                <button onClick={() => setTab('intake')} className="btn-primary">+ New Order</button>
+              </div>
+            </div>
+          ) : (
           <div className="card overflow-hidden">
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-100">
@@ -157,6 +162,7 @@ export default function SpiritWearModule() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       )}
 
