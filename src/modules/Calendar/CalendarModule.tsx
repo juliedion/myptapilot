@@ -7,7 +7,7 @@ const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 const DAYS         = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const DAYS_SHORT   = ['S','M','T','W','T','F','S']
 
-// Quarter-hour slots 7:00 AM – 9:45 PM
+// Quarter-hour slots 7:00 AM – 9:00 PM
 const TIME_SLOTS: { label: string; minutes: number }[] = []
 for (let h = 7; h <= 21; h++) {
   for (const m of [0, 15, 30, 45]) {
@@ -24,33 +24,20 @@ function fmt(minutes: number) {
   return slot?.label ?? ''
 }
 
-interface Invite {
-  id: string
-  email: string
-  name?: string
-}
-
-interface Signup {
-  id: string
-  name: string
-  email?: string
-  role?: string
-  note?: string
-}
+interface Invite  { id: string; email: string; name?: string }
+interface Signup  { id: string; name: string; email?: string; role?: string; note?: string }
 
 interface CalEvent {
   id: string
-  year: number
-  month: number
-  day: number
-  startMin?: number   // minutes since midnight, e.g. 18*60+30 = 1110
-  endMin?: number
+  year: number; month: number; day: number
+  startMin?: number; endMin?: number
   title: string
   type: 'meeting' | 'fundraiser' | 'event' | 'deadline'
   description?: string
-  location?: string
-  googleMeet?: boolean
-  meetLink?: string
+  location?: string          // in-person address/room
+  googleMeet?: boolean       // has a video link
+  meetLink?: string          // video URL
+  virtualPlatform?: string   // 'Google Meet' | 'Zoom' | 'Teams' | 'Other'
   signupsEnabled?: boolean
   signups: Signup[]
   maxSignups?: number
@@ -58,8 +45,8 @@ interface CalEvent {
 }
 
 type ViewMode = 'month' | 'day' | 'year' | 'list'
-
-const seed = (e: Omit<CalEvent, 'signups' | 'invites'>): CalEvent => ({ ...e, signups: [], invites: [] })
+type LocType  = '' | 'inperson' | 'virtual'
+type VPlatform = 'googlemeet' | 'zoom' | 'teams' | 'other'
 
 const SEED_EVENTS: CalEvent[] = []
 
@@ -68,16 +55,6 @@ const TYPE = {
   fundraiser: { bg: 'bg-amber-100',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  gradient: 'from-amber-400 to-orange-500', pill: 'bg-amber-500' },
   event:      { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500', border: 'border-purple-200', gradient: 'from-violet-500 to-purple-600', pill: 'bg-violet-600' },
   deadline:   { bg: 'bg-red-100',    text: 'text-red-600',    dot: 'bg-red-500',    border: 'border-red-200',    gradient: 'from-red-500 to-rose-500',     pill: 'bg-red-500' },
-}
-
-const BLANK: {
-  title: string; day: string; startMin: string; endMin: string
-  type: CalEvent['type']; description: string; location: string
-  maxSignups: string; googleMeet: boolean; signupsEnabled: boolean
-} = {
-  title: '', day: '', startMin: String(18 * 60), endMin: String(19 * 60),
-  type: 'event', description: '', location: '', maxSignups: '',
-  googleMeet: false, signupsEnabled: false,
 }
 
 function daysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate() }
@@ -90,7 +67,6 @@ function icsDate(year: number, month: number, day: number, min?: number) {
   return `${base}T${pad(Math.floor(min / 60))}${pad(min % 60)}00`
 }
 
-// ── iCal export ───────────────────────────────────────────────────────────────
 function exportICS(events: CalEvent[]) {
   const lines = [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//My PTA Pilot//Calendar//EN', 'CALSCALE:GREGORIAN',
@@ -114,17 +90,16 @@ function exportICS(events: CalEvent[]) {
 }
 
 function exportCSV(events: CalEvent[]) {
-  const header = 'Title,Date,Start,End,Type,Location,Google Meet,Sign-Ups,Invites,Description'
+  const header = 'Title,Date,Start,End,Type,Location,Virtual Platform,Meet Link,Sign-Ups,Description'
   const rows = events.map(e =>
     [e.title,
      `${MONTHS[e.month]} ${e.day} ${e.year}`,
      e.startMin != null ? fmt(e.startMin) : 'All day',
      e.endMin   != null ? fmt(e.endMin)   : '',
-     e.type,
-     e.location || '',
-     e.googleMeet ? 'Yes' : 'No',
+     e.type, e.location || '',
+     e.virtualPlatform || (e.googleMeet ? 'Virtual' : ''),
+     e.meetLink || '',
      e.signups.length,
-     e.invites.map(i => i.email).join('; '),
      e.description || '',
     ].map(v => `"${v}"`).join(',')
   )
@@ -151,7 +126,7 @@ function parseICS(text: string): Omit<CalEvent, 'id'>[] {
   }).filter(e => !isNaN(e.year))
 }
 
-// ── Toggle component ──────────────────────────────────────────────────────────
+// ── Toggle ────────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -164,7 +139,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   )
 }
 
-// ── Time select ───────────────────────────────────────────────────────────────
+// ── TimeSelect ────────────────────────────────────────────────────────────────
 function TimeSelect({ value, onChange, placeholder = 'All day', afterMin }: {
   value: string; onChange: (v: string) => void; placeholder?: string; afterMin?: number
 }) {
@@ -177,25 +152,141 @@ function TimeSelect({ value, onChange, placeholder = 'All day', afterMin }: {
   )
 }
 
-// ── Event form fields (shared between Add and Edit) ───────────────────────────
-function EventForm({ form, onChange }: {
-  form: typeof BLANK & { inviteInput?: string }
-  onChange: (patch: Partial<typeof BLANK & { inviteInput?: string }>) => void
+// ── DatePicker popover ────────────────────────────────────────────────────────
+function DatePicker({ selYear, selMonth, selDay, onChange }: {
+  selYear: number; selMonth: number; selDay: number
+  onChange: (y: number, m: number, d: number) => void
 }) {
-  const [inviteInput, setInviteInput] = useState('')
-  const [invites, setInvites]         = useState<Invite[]>([])
+  const today = new Date()
+  const [open, setOpen]         = useState(false)
+  const [viewYear, setViewYear] = useState(selYear || today.getFullYear())
+  const [viewMonth, setViewMonth] = useState(selMonth != null ? selMonth : today.getMonth())
 
-  // expose invites via a hidden field trick — parent manages invites separately
-  // Actually we'll manage invites inside this component and bubble via a callback
-  // Instead, let's keep it simple: just expose via onChange with a special key
-  // We'll use a local state approach and parent accesses via ref — but simplest:
-  // Let the parent own invites too. We'll add `invites` to the form type at parent level.
-  // For now keep inline — parent will get invites via form.invites key.
+  const prevMo = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) } else setViewMonth(m => m - 1) }
+  const nextMo = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) } else setViewMonth(m => m + 1) }
 
-  return null // placeholder — inline below in modals
+  const dim   = daysInMonth(viewYear, viewMonth)
+  const first = firstDayOf(viewYear, viewMonth)
+  const cells = [...Array(first).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)]
+
+  const displayStr = selDay
+    ? `${MONTHS[selMonth]} ${selDay}, ${selYear}`
+    : 'Select a date'
+
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => setOpen(v => !v)}
+        className="input flex items-center gap-2 text-left w-full">
+        <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span className={selDay ? 'text-slate-800' : 'text-slate-400'}>{displayStr}</span>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50 w-72 animate-fade-in">
+            {/* Month nav */}
+            <div className="flex items-center justify-between mb-3">
+              <button type="button" onClick={prevMo}
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span className="text-sm font-bold text-slate-800">{MONTHS[viewMonth]} {viewYear}</span>
+              <button type="button" onClick={nextMo}
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+            {/* Day headers */}
+            <div className="grid grid-cols-7 mb-1">
+              {DAYS_SHORT.map((d, i) => <div key={i} className="text-center text-[10px] font-bold text-slate-400 py-1">{d}</div>)}
+            </div>
+            {/* Day cells */}
+            <div className="grid grid-cols-7 gap-0.5">
+              {cells.map((d, i) => {
+                if (!d) return <div key={i} />
+                const isSel = d === selDay && viewMonth === selMonth && viewYear === selYear
+                const isTod = viewYear === today.getFullYear() && viewMonth === today.getMonth() && d === today.getDate()
+                return (
+                  <button key={i} type="button"
+                    onClick={() => { onChange(viewYear, viewMonth, d); setOpen(false) }}
+                    className={`w-full aspect-square rounded-full flex items-center justify-center text-xs font-semibold transition-all
+                      ${isSel ? 'bg-brand-600 text-white' : isTod ? 'bg-brand-100 text-brand-700' : 'hover:bg-slate-100 text-slate-700'}`}>
+                    {d}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
-// ── Invite list sub-component ─────────────────────────────────────────────────
+// ── Location section ──────────────────────────────────────────────────────────
+const VPLATFORMS: { id: VPlatform; label: string; icon: string; placeholder: string }[] = [
+  { id: 'googlemeet', label: 'Google Meet', icon: '📹', placeholder: 'https://meet.google.com/abc-defg-hij' },
+  { id: 'zoom',       label: 'Zoom',        icon: '💻', placeholder: 'https://zoom.us/j/1234567890' },
+  { id: 'teams',      label: 'Teams',       icon: '🟦', placeholder: 'https://teams.microsoft.com/l/meetup-join/…' },
+  { id: 'other',      label: 'Other',       icon: '🔗', placeholder: 'https://…' },
+]
+
+function LocationSection({ locationType, locationText, virtualPlatform, virtualUrl, onChange }: {
+  locationType: LocType
+  locationText: string
+  virtualPlatform: VPlatform
+  virtualUrl: string
+  onChange: (patch: { locationType?: LocType; locationText?: string; virtualPlatform?: VPlatform; virtualUrl?: string }) => void
+}) {
+  return (
+    <div>
+      <label className="label">Location</label>
+      {/* Segmented control */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-3">
+        {([['', '—'], ['inperson', '📍 In Person'], ['virtual', '📹 Virtual']] as [LocType, string][]).map(([val, lbl]) => (
+          <button key={val} type="button" onClick={() => onChange({ locationType: val })}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${locationType === val ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      {locationType === 'inperson' && (
+        <input className="input" placeholder="e.g. School Gymnasium, Room 204, or 123 Main St"
+          value={locationText} onChange={e => onChange({ locationText: e.target.value })} />
+      )}
+
+      {locationType === 'virtual' && (
+        <div className="space-y-3">
+          {/* Platform pills */}
+          <div className="flex flex-wrap gap-2">
+            {VPLATFORMS.map(p => (
+              <button key={p.id} type="button" onClick={() => onChange({ virtualPlatform: p.id })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all ${virtualPlatform === p.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300'}`}>
+                {p.icon} {p.label}
+              </button>
+            ))}
+          </div>
+          {/* URL */}
+          <div>
+            <label className="label">
+              {VPLATFORMS.find(p => p.id === virtualPlatform)?.label ?? 'Meeting'} Link
+              <span className="text-slate-400 font-normal ml-1">(optional)</span>
+            </label>
+            <input className="input text-sm"
+              placeholder={VPLATFORMS.find(p => p.id === virtualPlatform)?.placeholder ?? 'https://…'}
+              value={virtualUrl} onChange={e => onChange({ virtualUrl: e.target.value })} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── InviteSection ─────────────────────────────────────────────────────────────
 function InviteSection({ invites, onChange }: { invites: Invite[]; onChange: (v: Invite[]) => void }) {
   const [input, setInput] = useState('')
   const add = () => {
@@ -224,48 +315,70 @@ function InviteSection({ invites, onChange }: { invites: Invite[]; onChange: (v:
           ))}
         </div>
       )}
-      {invites.length > 0 && (
-        <p className="text-[11px] text-slate-400 mt-1.5">In a future release, invites will be emailed automatically.</p>
-      )}
     </div>
   )
+}
+
+// ── helpers to map form → CalEvent fields ─────────────────────────────────────
+function locToEvent(locationType: LocType, locationText: string, virtualPlatform: VPlatform, virtualUrl: string) {
+  if (locationType === 'inperson') {
+    return { location: locationText || undefined, googleMeet: false, meetLink: undefined, virtualPlatform: undefined }
+  }
+  if (locationType === 'virtual') {
+    const platform = VPLATFORMS.find(p => p.id === virtualPlatform)
+    const link = virtualUrl || (virtualPlatform === 'googlemeet' ? 'https://meet.google.com/new' : undefined)
+    return { location: undefined, googleMeet: true, meetLink: link, virtualPlatform: platform?.label }
+  }
+  return { location: undefined, googleMeet: false, meetLink: undefined, virtualPlatform: undefined }
+}
+
+function eventToLocForm(ev: CalEvent): { locationType: LocType; locationText: string; virtualPlatform: VPlatform; virtualUrl: string } {
+  if (ev.googleMeet) {
+    const plat = VPLATFORMS.find(p => p.label === ev.virtualPlatform)
+    return { locationType: 'virtual', locationText: '', virtualPlatform: plat?.id ?? 'googlemeet', virtualUrl: ev.meetLink ?? '' }
+  }
+  if (ev.location) return { locationType: 'inperson', locationText: ev.location, virtualPlatform: 'googlemeet', virtualUrl: '' }
+  return { locationType: '', locationText: '', virtualPlatform: 'googlemeet', virtualUrl: '' }
 }
 
 // ── Event Detail / Edit Modal ─────────────────────────────────────────────────
 function EventModal({ event, onClose, onSave, onDelete }: {
   event: CalEvent; onClose: () => void; onSave: (e: CalEvent) => void; onDelete: (id: string) => void
 }) {
-  const [tab, setTab]           = useState<'detail' | 'edit' | 'signups'>('detail')
+  const [tab, setTab]       = useState<'detail' | 'edit' | 'signups'>('detail')
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const locInit = eventToLocForm(event)
   const [form, setForm] = useState({
     title: event.title,
-    day: String(event.day),
+    pickYear: event.year, pickMonth: event.month, pickDay: event.day,
     startMin: event.startMin != null ? String(event.startMin) : '',
     endMin:   event.endMin   != null ? String(event.endMin)   : '',
     type: event.type,
     description: event.description || '',
-    location: event.location || '',
+    locationType: locInit.locationType,
+    locationText: locInit.locationText,
+    virtualPlatform: locInit.virtualPlatform,
+    virtualUrl: locInit.virtualUrl,
     maxSignups: event.maxSignups != null ? String(event.maxSignups) : '',
-    googleMeet: event.googleMeet ?? false,
-    meetLink: event.meetLink ?? '',
     signupsEnabled: event.signupsEnabled ?? false,
   })
   const [invites, setInvites] = useState<Invite[]>(event.invites)
   const [signupForm, setSignupForm] = useState({ name: '', email: '', role: '', note: '' })
+
   const set = (p: Partial<typeof form>) => setForm(f => ({ ...f, ...p }))
 
   const saveEdit = () => {
+    const loc = locToEvent(form.locationType, form.locationText, form.virtualPlatform as VPlatform, form.virtualUrl)
     onSave({
       ...event,
       title: form.title,
-      day: parseInt(form.day),
+      year: form.pickYear, month: form.pickMonth, day: form.pickDay,
       startMin: form.startMin ? parseInt(form.startMin) : undefined,
       endMin:   form.endMin   ? parseInt(form.endMin)   : undefined,
       type: form.type,
       description: form.description || undefined,
-      location: form.location || undefined,
-      googleMeet: form.googleMeet,
-      meetLink: form.googleMeet ? (form.meetLink || 'https://meet.google.com/new') : undefined,
+      ...loc,
       signupsEnabled: form.signupsEnabled,
       maxSignups: form.signupsEnabled && form.maxSignups ? parseInt(form.maxSignups) : undefined,
       invites,
@@ -285,6 +398,9 @@ function EventModal({ event, onClose, onSave, onDelete }: {
   const dateStr = `${DAYS[new Date(event.year, event.month, event.day).getDay()]}, ${MONTHS[event.month]} ${event.day}, ${event.year}`
   const spotsLeft = event.signupsEnabled && event.maxSignups != null ? event.maxSignups - event.signups.length : null
 
+  const platformLabel = event.virtualPlatform || (event.googleMeet ? 'Virtual Meeting' : null)
+  const platformIcon  = VPLATFORMS.find(p => p.label === event.virtualPlatform)?.icon ?? '📹'
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col animate-fade-in" onClick={e => e.stopPropagation()}>
@@ -295,14 +411,12 @@ function EventModal({ event, onClose, onSave, onDelete }: {
             <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">{event.type}</span>
             <h2 className="text-white font-bold text-xl leading-tight mt-0.5">{event.title}</h2>
             <p className="text-white/75 text-sm mt-1">
-              {dateStr}
-              {event.startMin != null ? ` · ${fmt(event.startMin)}${event.endMin != null ? ` – ${fmt(event.endMin)}` : ''}` : ''}
+              {dateStr}{event.startMin != null ? ` · ${fmt(event.startMin)}${event.endMin != null ? ` – ${fmt(event.endMin)}` : ''}` : ''}
             </p>
             {event.googleMeet && (
               <a href={event.meetLink || 'https://meet.google.com/new'} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-semibold transition-colors">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg>
-                Join Google Meet
+                {platformIcon} Join {platformLabel}
               </a>
             )}
           </div>
@@ -342,13 +456,11 @@ function EventModal({ event, onClose, onSave, onDelete }: {
               )}
               {event.googleMeet && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg>
-                  </div>
+                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">{platformIcon}</div>
                   <div>
-                    <p className="text-xs text-slate-400 font-medium">Google Meet</p>
+                    <p className="text-xs text-slate-400 font-medium">{platformLabel}</p>
                     <a href={event.meetLink || 'https://meet.google.com/new'} target="_blank" rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline font-medium">{event.meetLink || 'Open Google Meet'}</a>
+                      className="text-sm text-blue-600 hover:underline font-medium break-all">{event.meetLink || 'Open meeting link'}</a>
                   </div>
                 </div>
               )}
@@ -364,9 +476,7 @@ function EventModal({ event, onClose, onSave, onDelete }: {
                   <div>
                     <p className="text-xs text-slate-400 font-medium">Invited ({event.invites.length})</p>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {event.invites.map(inv => (
-                        <span key={inv.id} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">{inv.email}</span>
-                      ))}
+                      {event.invites.map(inv => <span key={inv.id} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">{inv.email}</span>)}
                     </div>
                   </div>
                 </div>
@@ -409,18 +519,12 @@ function EventModal({ event, onClose, onSave, onDelete }: {
                 <label className="label">Title *</label>
                 <input className="input" value={form.title} onChange={e => set({ title: e.target.value })} />
               </div>
+              <div>
+                <label className="label">Date</label>
+                <DatePicker selYear={form.pickYear} selMonth={form.pickMonth} selDay={form.pickDay}
+                  onChange={(y, m, d) => set({ pickYear: y, pickMonth: m, pickDay: d })} />
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">Day</label>
-                  <input className="input" type="number" min="1" max="31" value={form.day} onChange={e => set({ day: e.target.value })} />
-                </div>
-                <div>
-                  <label className="label">Type</label>
-                  <select className="input" value={form.type} onChange={e => set({ type: e.target.value as CalEvent['type'] })}>
-                    <option value="event">Event</option><option value="meeting">Meeting</option>
-                    <option value="fundraiser">Fundraiser</option><option value="deadline">Deadline</option>
-                  </select>
-                </div>
                 <div>
                   <label className="label">Start Time</label>
                   <TimeSelect value={form.startMin} onChange={v => set({ startMin: v, endMin: '' })} />
@@ -432,27 +536,23 @@ function EventModal({ event, onClose, onSave, onDelete }: {
                 </div>
               </div>
               <div>
-                <label className="label">Location</label>
-                <input className="input" placeholder="e.g. School Gymnasium" value={form.location} onChange={e => set({ location: e.target.value })} />
+                <label className="label">Type</label>
+                <select className="input" value={form.type} onChange={e => set({ type: e.target.value as CalEvent['type'] })}>
+                  <option value="event">Event</option><option value="meeting">Meeting</option>
+                  <option value="fundraiser">Fundraiser</option><option value="deadline">Deadline</option>
+                </select>
               </div>
+              <LocationSection
+                locationType={form.locationType as LocType}
+                locationText={form.locationText}
+                virtualPlatform={form.virtualPlatform as VPlatform}
+                virtualUrl={form.virtualUrl}
+                onChange={patch => set(patch as Partial<typeof form>)}
+              />
               <div>
                 <label className="label">Description</label>
                 <textarea className="input" rows={2} value={form.description} onChange={e => set({ description: e.target.value })} />
               </div>
-
-              {/* Google Meet toggle */}
-              <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-                <Toggle checked={form.googleMeet} onChange={v => set({ googleMeet: v })} label="Google Meet link" />
-                {form.googleMeet && (
-                  <div>
-                    <label className="label">Meet URL <span className="text-slate-400 font-normal">(optional — leave blank to use google.com/meet)</span></label>
-                    <input className="input text-sm" placeholder="https://meet.google.com/abc-defg-hij"
-                      value={form.meetLink} onChange={e => set({ meetLink: e.target.value })} />
-                  </div>
-                )}
-              </div>
-
-              {/* Signups toggle */}
               <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <Toggle checked={form.signupsEnabled} onChange={v => set({ signupsEnabled: v })} label="Enable sign-ups for this event" />
                 {form.signupsEnabled && (
@@ -463,12 +563,9 @@ function EventModal({ event, onClose, onSave, onDelete }: {
                   </div>
                 )}
               </div>
-
-              {/* Invite people */}
               <div className="bg-slate-50 rounded-xl p-4">
                 <InviteSection invites={invites} onChange={setInvites} />
               </div>
-
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setTab('detail')} className="btn-secondary flex-1 justify-center">Cancel</button>
                 <button onClick={saveEdit} className="btn-primary flex-1 justify-center">Save Changes</button>
@@ -523,25 +620,35 @@ function EventModal({ event, onClose, onSave, onDelete }: {
 }
 
 // ── Add Event Modal ───────────────────────────────────────────────────────────
-function AddEventModal({ year, month, onClose, onAdd }: {
-  year: number; month: number; onClose: () => void; onAdd: (e: Omit<CalEvent, 'id'>) => void
+function AddEventModal({ initYear, initMonth, onClose, onAdd }: {
+  initYear: number; initMonth: number; onClose: () => void; onAdd: (e: Omit<CalEvent, 'id'>) => void
 }) {
-  const [form, setForm] = useState({ ...BLANK })
+  const [form, setForm] = useState({
+    title: '',
+    pickYear: initYear, pickMonth: initMonth, pickDay: 0,
+    startMin: String(18 * 60), endMin: String(19 * 60),
+    type: 'event' as CalEvent['type'],
+    description: '',
+    locationType: '' as LocType,
+    locationText: '',
+    virtualPlatform: 'googlemeet' as VPlatform,
+    virtualUrl: '',
+    maxSignups: '',
+    signupsEnabled: false,
+  })
   const [invites, setInvites] = useState<Invite[]>([])
-  const set = (p: Partial<typeof BLANK>) => setForm(f => ({ ...f, ...p }))
+  const set = (p: Partial<typeof form>) => setForm(f => ({ ...f, ...p }))
 
   const submit = () => {
-    if (!form.title || !form.day) return
+    if (!form.title || !form.pickDay) return
+    const loc = locToEvent(form.locationType, form.locationText, form.virtualPlatform, form.virtualUrl)
     onAdd({
-      year, month,
-      day: parseInt(form.day),
+      year: form.pickYear, month: form.pickMonth, day: form.pickDay,
       startMin: form.startMin ? parseInt(form.startMin) : undefined,
       endMin:   form.endMin   ? parseInt(form.endMin)   : undefined,
       title: form.title, type: form.type,
       description: form.description || undefined,
-      location: form.location || undefined,
-      googleMeet: form.googleMeet,
-      meetLink: form.googleMeet ? 'https://meet.google.com/new' : undefined,
+      ...loc,
       signupsEnabled: form.signupsEnabled,
       maxSignups: form.signupsEnabled && form.maxSignups ? parseInt(form.maxSignups) : undefined,
       signups: [], invites,
@@ -553,25 +660,21 @@ function AddEventModal({ year, month, onClose, onAdd }: {
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-fade-in">
         <div className="p-6 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800 text-lg">Add Event — {MONTHS[month]} {year}</h3>
+          <h3 className="font-bold text-slate-800 text-lg">Add Event</h3>
         </div>
         <div className="p-6 space-y-4">
           <div>
             <label className="label">Title *</label>
-            <input className="input" placeholder="e.g. Fall Carnival" value={form.title} onChange={e => set({ title: e.target.value })} />
+            <input className="input" placeholder="e.g. Fall Carnival" value={form.title} onChange={e => set({ title: e.target.value })} autoFocus />
           </div>
+
+          <div>
+            <label className="label">Date *</label>
+            <DatePicker selYear={form.pickYear} selMonth={form.pickMonth} selDay={form.pickDay}
+              onChange={(y, m, d) => set({ pickYear: y, pickMonth: m, pickDay: d })} />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Day</label>
-              <input className="input" type="number" min="1" max={daysInMonth(year, month)} value={form.day} onChange={e => set({ day: e.target.value })} />
-            </div>
-            <div>
-              <label className="label">Type</label>
-              <select className="input" value={form.type} onChange={e => set({ type: e.target.value as CalEvent['type'] })}>
-                <option value="event">Event</option><option value="meeting">Meeting</option>
-                <option value="fundraiser">Fundraiser</option><option value="deadline">Deadline</option>
-              </select>
-            </div>
             <div>
               <label className="label">Start Time</label>
               <TimeSelect value={form.startMin} onChange={v => set({ startMin: v, endMin: '' })} />
@@ -582,22 +685,28 @@ function AddEventModal({ year, month, onClose, onAdd }: {
                 afterMin={form.startMin ? parseInt(form.startMin) : undefined} />
             </div>
           </div>
+
           <div>
-            <label className="label">Location</label>
-            <input className="input" placeholder="e.g. School Gymnasium" value={form.location} onChange={e => set({ location: e.target.value })} />
+            <label className="label">Type</label>
+            <select className="input" value={form.type} onChange={e => set({ type: e.target.value as CalEvent['type'] })}>
+              <option value="event">Event</option><option value="meeting">Meeting</option>
+              <option value="fundraiser">Fundraiser</option><option value="deadline">Deadline</option>
+            </select>
           </div>
+
+          <LocationSection
+            locationType={form.locationType}
+            locationText={form.locationText}
+            virtualPlatform={form.virtualPlatform}
+            virtualUrl={form.virtualUrl}
+            onChange={patch => set(patch as Partial<typeof form>)}
+          />
+
           <div>
             <label className="label">Description</label>
             <textarea className="input" rows={2} value={form.description} onChange={e => set({ description: e.target.value })} />
           </div>
 
-          {/* Google Meet */}
-          <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-            <Toggle checked={form.googleMeet} onChange={v => set({ googleMeet: v })} label="Add Google Meet link" />
-            {form.googleMeet && <p className="text-xs text-blue-600">A Google Meet link will be attached to this event.</p>}
-          </div>
-
-          {/* Sign-ups */}
           <div className="bg-slate-50 rounded-xl p-4 space-y-3">
             <Toggle checked={form.signupsEnabled} onChange={v => set({ signupsEnabled: v })} label="Enable sign-ups" />
             {form.signupsEnabled && (
@@ -609,14 +718,16 @@ function AddEventModal({ year, month, onClose, onAdd }: {
             )}
           </div>
 
-          {/* Invite */}
           <div className="bg-slate-50 rounded-xl p-4">
             <InviteSection invites={invites} onChange={setInvites} />
           </div>
         </div>
         <div className="px-6 pb-6 flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
-          <button onClick={submit} className="btn-primary flex-1 justify-center">Add Event</button>
+          <button onClick={submit} disabled={!form.title || !form.pickDay}
+            className="btn-primary flex-1 justify-center disabled:opacity-40 disabled:cursor-not-allowed">
+            Add Event
+          </button>
         </div>
       </div>
     </div>
@@ -628,26 +739,31 @@ export default function CalendarModule() {
   const today = new Date()
   const importRef = useRef<HTMLInputElement>(null)
 
-  const [view, setView]             = useState<ViewMode>('month')
-  const [year, setYear]             = useState(today.getFullYear())
-  const [month, setMonth]           = useState(today.getMonth())
+  const [view, setView]               = useState<ViewMode>('month')
+  const [year, setYear]               = useState(today.getFullYear())
+  const [month, setMonth]             = useState(today.getMonth())
   const [selectedDay, setSelectedDay] = useState(today.getDate())
-  const [events, setEvents]         = useState<CalEvent[]>(SEED_EVENTS)
-  const [showAdd, setShowAdd]       = useState(false)
-  const [selected, setSelected]     = useState<CalEvent | null>(null)
-  const [listFilter, setListFilter] = useState('all')
-  const [listSearch, setListSearch] = useState('')
+  const [events, setEvents]           = useState<CalEvent[]>(SEED_EVENTS)
+  const [showAdd, setShowAdd]         = useState(false)
+  const [selected, setSelected]       = useState<CalEvent | null>(null)
+  const [listFilter, setListFilter]   = useState('all')
+  const [listSearch, setListSearch]   = useState('')
   const [showExportMenu, setShowExportMenu] = useState(false)
-  const [importMsg, setImportMsg]   = useState('')
+  const [importMsg, setImportMsg]     = useState('')
 
   const eventsFor = (y: number, m: number, d?: number) =>
     events.filter(e => e.year === y && e.month === m && (d == null || e.day === d))
 
-  const openEvent = (ev: CalEvent) => setSelected(ev)
-  const closeEvent = () => setSelected(null)
-  const saveEvent  = (updated: CalEvent) => { setEvents(p => p.map(e => e.id === updated.id ? updated : e)); setSelected(updated) }
-  const deleteEvent = (id: string)       => { setEvents(p => p.filter(e => e.id !== id)); setSelected(null) }
-  const addEvent   = (ev: Omit<CalEvent, 'id'>) => setEvents(p => [...p, { ...ev, id: Date.now().toString() }])
+  const openEvent   = (ev: CalEvent) => setSelected(ev)
+  const closeEvent  = () => setSelected(null)
+  const saveEvent   = (updated: CalEvent) => { setEvents(p => p.map(e => e.id === updated.id ? updated : e)); setSelected(updated) }
+  const deleteEvent = (id: string) => { setEvents(p => p.filter(e => e.id !== id)); setSelected(null) }
+  const addEvent    = (ev: Omit<CalEvent, 'id'>) => {
+    const added = { ...ev, id: Date.now().toString() }
+    setEvents(p => [...p, added])
+    // If event falls in a different month/year, navigate there
+    if (ev.month !== month || ev.year !== year) { setMonth(ev.month); setYear(ev.year) }
+  }
 
   const handleImport = (file: File) => {
     const reader = new FileReader()
@@ -669,7 +785,6 @@ export default function CalendarModule() {
   const goToDay   = (d: number, m?: number, y?: number) => { if (m!=null) setMonth(m); if (y!=null) setYear(y); setSelectedDay(d); setView('day') }
   const goToday   = () => { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDay(today.getDate()) }
 
-  // ── shared sub-components ─────────────────────────────────────────────────
   const EventPill = ({ ev }: { ev: CalEvent }) => (
     <div onClick={e => { e.stopPropagation(); openEvent(ev) }}
       className={`${TYPE[ev.type].bg} ${TYPE[ev.type].text} text-[10px] px-1.5 py-0.5 rounded-md mb-0.5 truncate font-semibold cursor-pointer hover:opacity-80 transition-opacity`}>
@@ -785,7 +900,6 @@ export default function CalendarModule() {
     const allDay  = dayEvs.filter(e => e.startMin == null)
     const timed   = dayEvs.filter(e => e.startMin != null)
     const isToday = year===today.getFullYear() && month===today.getMonth() && selectedDay===today.getDate()
-    // Build hour buckets (7–21)
     const hours   = Array.from({ length: 15 }, (_, i) => i + 7)
     return (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -849,7 +963,7 @@ export default function CalendarModule() {
             })}
           </div>
         </div>
-        {/* Mini picker */}
+        {/* Mini date picker */}
         <div className="space-y-4">
           <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
@@ -1005,7 +1119,6 @@ export default function CalendarModule() {
                             <div className="flex flex-col items-end gap-1 flex-shrink-0">
                               <span className={`badge ${TYPE[ev.type].bg} ${TYPE[ev.type].text}`}>{ev.type}</span>
                               {ev.signupsEnabled&&ev.signups.length>0&&<span className="text-xs text-slate-400">{ev.signups.length}🙋</span>}
-                              {ev.invites.length>0&&<span className="text-xs text-slate-400">{ev.invites.length}✉</span>}
                             </div>
                           </div>
                         )
@@ -1025,7 +1138,6 @@ export default function CalendarModule() {
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
       <ModuleHeader title="Calendar & Events" subtitle="Plan, schedule, and discover event ideas for each month" gradient="gradient-cool" icon="📅" />
 
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <ViewToggle />
         <div className="flex items-center gap-2 flex-wrap">
@@ -1067,7 +1179,7 @@ export default function CalendarModule() {
       {view==='list'  && <ListView />}
 
       {selected && <EventModal event={selected} onClose={closeEvent} onSave={saveEvent} onDelete={deleteEvent} />}
-      {showAdd   && <AddEventModal year={year} month={month} onClose={() => setShowAdd(false)} onAdd={addEvent} />}
+      {showAdd   && <AddEventModal initYear={year} initMonth={month} onClose={() => setShowAdd(false)} onAdd={addEvent} />}
       {showExportMenu && <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />}
     </div>
   )
