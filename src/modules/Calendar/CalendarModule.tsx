@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import ModuleHeader from '../../components/ModuleHeader'
 import { monthlyEventSuggestions } from '../../data/suggestions'
-import PDFImport, { type ParsedEvent } from './PDFImport'
 
 const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -751,7 +750,6 @@ export default function CalendarModule() {
   const [listSearch, setListSearch]   = useState('')
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [importMsg, setImportMsg]     = useState('')
-  const [showPDFImport, setShowPDFImport] = useState(false)
 
   const eventsFor = (y: number, m: number, d?: number) =>
     events.filter(e => e.year === y && e.month === m && (d == null || e.day === d))
@@ -765,18 +763,6 @@ export default function CalendarModule() {
     setEvents(p => [...p, added])
     // If event falls in a different month/year, navigate there
     if (ev.month !== month || ev.year !== year) { setMonth(ev.month); setYear(ev.year) }
-  }
-
-  const handlePDFImport = (events: ParsedEvent[]) => {
-    const newEvents = events.map(ev => ({
-      id: `pdf_${Date.now()}_${Math.random()}`,
-      year: ev.year, month: ev.month, day: ev.day,
-      title: ev.title, type: ev.type,
-      signups: [], invites: [], signupsEnabled: false,
-    }))
-    setEvents(p => [...p, ...newEvents])
-    setImportMsg(`Imported ${newEvents.length} event${newEvents.length !== 1 ? 's' : ''} from PDF`)
-    setTimeout(() => setImportMsg(''), 5000)
   }
 
   const handleImport = (file: File) => {
@@ -1156,10 +1142,6 @@ export default function CalendarModule() {
         <ViewToggle />
         <div className="flex items-center gap-2 flex-wrap">
           <NavBar />
-          <button onClick={() => setShowPDFImport(true)} className="btn-secondary text-sm">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            Import Calendar
-          </button>
           <div className="relative">
             <button onClick={() => importRef.current?.click()} className="btn-secondary text-sm">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -1198,8 +1180,7 @@ export default function CalendarModule() {
 
       {selected && <EventModal event={selected} onClose={closeEvent} onSave={saveEvent} onDelete={deleteEvent} />}
       {showAdd   && <AddEventModal initYear={year} initMonth={month} onClose={() => setShowAdd(false)} onAdd={addEvent} />}
-      {showPDFImport && <PDFImport onImport={handlePDFImport} onClose={() => setShowPDFImport(false)} />}
-      {showExportMenu && <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />}
+{showExportMenu && <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />}
     </div>
   )
 }
