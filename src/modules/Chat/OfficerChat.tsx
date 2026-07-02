@@ -17,22 +17,7 @@ interface Msg {
 }
 
 const SEED: Record<string, Msg[]> = {
-  exec: [
-    { id: '1', sender: 'Sarah Mitchell', avatar: 'S', text: 'Board members — please review the proposed 2025-2026 budget draft before our Thursday meeting. Link in Documents.', time: 'Mon 8:30 AM' },
-    { id: '2', sender: 'Michael Chen', avatar: 'M', text: 'Budget looks solid. I flagged a couple line items for discussion. My notes are on page 3.', time: 'Mon 9:45 AM' },
-    { id: '3', sender: 'Tom Rivera', avatar: 'T', text: 'Should we schedule a pre-meeting call for the exec team to align before Thursday?', time: 'Mon 2:00 PM' },
-    { id: '4', sender: 'Jessica Park', avatar: 'J', text: 'Good idea. How about Wednesday at 7pm? I can send a calendar invite.', time: 'Mon 2:20 PM' },
-    { id: '5', sender: 'Sarah Mitchell', avatar: 'S', text: 'Wednesday works for me. Let\'s keep it to 30 min max. Agenda: budget review + Fall Carnival logistics.', time: 'Mon 2:35 PM' },
-  ],
-  finance: [
-    { id: '1', sender: 'Michael Chen', avatar: 'M', text: 'Q2 is looking great. We\'re $2,200 ahead of last year at this point. Walk-A-Thon was a big driver.', time: 'Fri 10:00 AM' },
-    { id: '2', sender: 'Sarah Mitchell', avatar: 'S', text: 'Excellent! Any concerns about the Fall Carnival budget?', time: 'Fri 10:15 AM' },
-    { id: '3', sender: 'Michael Chen', avatar: 'M', text: 'We budgeted $3,500 for carnival and should come in under that if we reuse our existing vendor contracts.', time: 'Fri 10:30 AM' },
-  ],
-  planning: [
-    { id: '1', sender: 'Tom Rivera', avatar: 'T', text: 'I\'d like to propose we launch a new Family STEM Nights program this fall. Could bring in 100+ families per event.', time: 'Thu 6:00 PM' },
-    { id: '2', sender: 'Sarah Mitchell', avatar: 'S', text: 'Love this idea! Let\'s add it to the Programs agenda for next meeting.', time: 'Thu 6:45 PM' },
-  ],
+  exec: [], finance: [], planning: [],
 }
 
 const avatarColors = ['bg-purple-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-indigo-500']
@@ -110,6 +95,13 @@ export default function OfficerChat() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+          {current.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center pb-12">
+              <div className="text-4xl mb-3">{OFFICER_CHANNELS.find(c => c.id === channel)?.icon}</div>
+              <h3 className="font-bold text-slate-700 mb-1">{OFFICER_CHANNELS.find(c => c.id === channel)?.label}</h3>
+              <p className="text-sm text-slate-400 max-w-xs">This private channel is just for officers. Start the conversation!</p>
+            </div>
+          )}
           {current.map(msg => (
             <div key={msg.id} className={`flex items-start gap-3 animate-fade-in ${msg.isMe ? 'flex-row-reverse' : ''}`}>
               <div className={`w-9 h-9 rounded-full ${getColor(msg.sender)} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>

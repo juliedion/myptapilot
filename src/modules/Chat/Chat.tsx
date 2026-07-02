@@ -18,25 +18,7 @@ interface Msg {
 }
 
 const SEED_MESSAGES: Record<string, Msg[]> = {
-  general: [
-    { id: '1', sender: 'Sarah Mitchell', avatar: 'S', text: 'Good morning everyone! Reminder that our board meeting is this Thursday at 7pm.', time: '9:02 AM' },
-    { id: '2', sender: 'Tom Rivera', avatar: 'T', text: 'Thanks Sarah! Will the Zoom link be the same as last month?', time: '9:15 AM' },
-    { id: '3', sender: 'Amanda Johnson', avatar: 'A', text: 'Yes same link — it\'s pinned in the Documents section. Also don\'t forget to grab your Walk-A-Thon pledge forms!', time: '9:22 AM' },
-    { id: '4', sender: 'Jessica Park', avatar: 'J', text: 'I\'ve uploaded the agenda to Documents → Meeting Minutes. Looking forward to seeing everyone!', time: '10:05 AM' },
-    { id: '5', sender: 'Michael Chen', avatar: 'M', text: 'Quick heads up — I\'ll be presenting the Q2 financials. Great numbers to share! 📈', time: '11:30 AM' },
-  ],
-  fundraising: [
-    { id: '1', sender: 'Amanda Johnson', avatar: 'A', text: 'Walk-A-Thon update: We\'re at $12,400 out of our $15,000 goal! 3 days left — push for those last pledges!', time: '8:45 AM' },
-    { id: '2', sender: 'Tom Rivera', avatar: 'T', text: 'Amazing! I\'ll blast a reminder to our parent list today.', time: '9:00 AM' },
-    { id: '3', sender: 'Sarah Mitchell', avatar: 'S', text: 'Can someone reach out to Chipotle about a Restaurant Night in September?', time: '10:15 AM' },
-  ],
-  events: [
-    { id: '1', sender: 'Jessica Park', avatar: 'J', text: 'Fall Carnival committee: we need 40 volunteers. Sign-up sheet is now live on the website!', time: 'Yesterday 3:00 PM' },
-    { id: '2', sender: 'Amanda Johnson', avatar: 'A', text: 'I can coordinate the game booths again this year 🎯', time: 'Yesterday 3:20 PM' },
-  ],
-  volunteers: [
-    { id: '1', sender: 'Sarah Mitchell', avatar: 'S', text: 'We need 3 volunteers for the book fair this Friday 9-11am. Reply here or email the front office!', time: '2d ago' },
-  ],
+  general: [], fundraising: [], events: [], volunteers: [],
 }
 
 const avatarColors = ['bg-purple-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500']
@@ -92,15 +74,7 @@ export default function Chat() {
         <div className="mt-6 px-2 mb-3">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Direct Messages</p>
         </div>
-        {['Sarah Mitchell', 'Tom Rivera', 'Jessica Park', 'Michael Chen'].map(name => (
-          <button key={name} className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition-all mb-0.5">
-            <div className={`w-6 h-6 rounded-full ${getColor(name)} flex items-center justify-center text-white text-xs font-bold`}>
-              {name.charAt(0)}
-            </div>
-            <span className="truncate">{name.split(' ')[0]}</span>
-            <span className="ml-auto w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
-          </button>
-        ))}
+        <p className="text-xs text-slate-400 px-3 py-2">Members will appear here once they join your portal.</p>
       </div>
 
       {/* Chat area */}
@@ -116,6 +90,13 @@ export default function Chat() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+          {currentMessages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center pb-12">
+              <div className="text-4xl mb-3">{CHANNELS.find(c => c.id === channel)?.icon}</div>
+              <h3 className="font-bold text-slate-700 mb-1">#{CHANNELS.find(c => c.id === channel)?.label}</h3>
+              <p className="text-sm text-slate-400 max-w-xs">This is the beginning of the #{CHANNELS.find(c => c.id === channel)?.label.toLowerCase()} channel. Say hello!</p>
+            </div>
+          )}
           {currentMessages.map(msg => (
             <div key={msg.id} className={`flex items-start gap-3 animate-fade-in ${msg.isMe ? 'flex-row-reverse' : ''}`}>
               <div className={`w-9 h-9 rounded-full ${getColor(msg.sender)} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>

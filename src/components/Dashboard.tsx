@@ -38,11 +38,7 @@ const UPCOMING = [
   { date: 'Sep 3',  title: 'Walk-A-Thon Kickoff', type: 'fundraiser' },
 ]
 
-const CHAT_PREVIEW = [
-  { sender: 'Sarah Mitchell', avatar: 'S', text: 'Good morning everyone! Reminder that our board meeting is this Thursday at 7pm.', time: '9:02 AM' },
-  { sender: 'Tom Rivera', avatar: 'T', text: 'Thanks Sarah! Will the Zoom link be the same as last month?', time: '9:15 AM' },
-  { sender: 'Amanda Johnson', avatar: 'A', text: 'Yes same link — it\'s pinned in the Documents section. Also don\'t forget Walk-A-Thon pledge forms!', time: '9:22 AM' },
-]
+const CHAT_PREVIEW: { sender: string; avatar: string; text: string; time: string }[] = []
 
 const SETUP_STEPS = [
   { id: 'setup-workspace',   label: 'Set up your workspace name & colors', module: '' },
@@ -208,6 +204,11 @@ export default function Dashboard({ setActiveModule }: Props) {
               </button>
             </div>
             <div className="space-y-3 overflow-hidden">
+              {CHAT_PREVIEW.length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-xs text-slate-400">No messages yet — be the first to say hello!</p>
+                </div>
+              )}
               {CHAT_PREVIEW.map((msg, i) => (
                 <div key={i} className="flex items-start gap-2.5">
                   <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
