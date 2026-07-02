@@ -27,8 +27,11 @@ export default function FundraisersModule() {
   const [fundraisers, setFundraisers] = useState(SEED)
   const [tab, setTab] = useState<'active' | 'ideas'>(SEED.length === 0 ? 'ideas' : 'active')
   const [showAdd, setShowAdd] = useState(false)
+  const [showIdeaModal, setShowIdeaModal] = useState(false)
   const [selectedSuggestion, setSelectedSuggestion] = useState<typeof fundraiserSuggestions[0] | null>(null)
   const [form, setForm] = useState({ name: '', type: '', goalAmount: '', startDate: '', endDate: '', description: '', vendor: '' })
+  const [ideaForm, setIdeaForm] = useState({ name: '', type: '', description: '', submittedBy: '' })
+  const [customIdeas, setCustomIdeas] = useState<{ id: string; name: string; type: string; description: string; submittedBy: string }[]>([])
 
   const totalRaised = fundraisers.reduce((s, f) => s + f.raisedAmount, 0)
   const totalGoal = fundraisers.reduce((s, f) => s + f.goalAmount, 0)
@@ -53,10 +56,17 @@ export default function FundraisersModule() {
     setShowAdd(false)
   }
 
-  const addSuggestion = (s: typeof fundraiserSuggestions[0]) => {
+  const addSuggestion = (s: { name: string; type: string; description: string }) => {
     setForm(p => ({ ...p, name: s.name, type: s.type, description: s.description }))
     setSelectedSuggestion(null)
     setShowAdd(true)
+  }
+
+  const submitIdea = () => {
+    if (!ideaForm.name.trim()) return
+    setCustomIdeas(prev => [...prev, { id: Date.now().toString(), ...ideaForm }])
+    setIdeaForm({ name: '', type: '', description: '', submittedBy: '' })
+    setShowIdeaModal(false)
   }
 
   return (
@@ -94,13 +104,20 @@ export default function FundraisersModule() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-slate-100 rounded-xl p-1 w-fit">
-        <button onClick={() => setTab('active')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'active' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
-          My Fundraisers ({fundraisers.length})
-        </button>
-        <button onClick={() => setTab('ideas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'ideas' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
-          💡 Ideas & Suggestions ({fundraiserSuggestions.length})
-        </button>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
+          <button onClick={() => setTab('active')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'active' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+            My Fundraisers ({fundraisers.length})
+          </button>
+          <button onClick={() => setTab('ideas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'ideas' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+            💡 Ideas & Suggestions ({fundraiserSuggestions.length + customIdeas.length})
+          </button>
+        </div>
+        {tab === 'ideas' && (
+          <button onClick={() => setShowIdeaModal(true)} className="btn-secondary text-sm">
+            ✏️ Submit Your Own Idea
+          </button>
+        )}
       </div>
 
       {tab === 'active' ? (
@@ -161,6 +178,30 @@ export default function FundraisersModule() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {customIdeas.map(idea => (
+            <div key={idea.id} className="card p-5 hover:shadow-md transition-all group border-2 border-brand-100">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="badge bg-brand-100 text-brand-700 text-xs">Your Idea</span>
+                    {idea.submittedBy && <span className="text-xs text-slate-400">by {idea.submittedBy}</span>}
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm group-hover:text-brand-700">{idea.name}</h3>
+                  {idea.type && <span className="badge bg-slate-100 text-slate-500 text-xs mt-1">{idea.type}</span>}
+                </div>
+                <button onClick={() => setCustomIdeas(p => p.filter(i => i.id !== idea.id))} className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              {idea.description && <p className="text-xs text-slate-500 mt-2 leading-relaxed">{idea.description}</p>}
+              <button
+                onClick={() => addSuggestion(idea)}
+                className="mt-4 w-full btn-primary text-xs py-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                + Add to My Fundraisers
+              </button>
+            </div>
+          ))}
           {fundraiserSuggestions.map((s, i) => (
             <div key={i} className="card p-5 hover:shadow-md transition-all group">
               <div className="flex items-start justify-between mb-2">
@@ -178,6 +219,38 @@ export default function FundraisersModule() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Submit Idea Modal */}
+      {showIdeaModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
+            <h3 className="font-bold text-slate-800 text-lg mb-1">Submit a Fundraiser Idea</h3>
+            <p className="text-sm text-slate-500 mb-5">Have a fundraiser in mind? Add it here to keep it on the board — you can turn it into an active campaign later.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="label">Idea Name *</label>
+                <input className="input" placeholder="e.g. Restaurant Night at Pizza Palace" value={ideaForm.name} onChange={e => setIdeaForm(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Type / Category</label>
+                <input className="input" placeholder="e.g. Restaurant Partnership, Product Sale…" value={ideaForm.type} onChange={e => setIdeaForm(p => ({ ...p, type: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Description</label>
+                <textarea className="input" rows={3} placeholder="What's the concept? Any details about how it works…" value={ideaForm.description} onChange={e => setIdeaForm(p => ({ ...p, description: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Your Name <span className="text-slate-400 font-normal">(optional)</span></label>
+                <input className="input" placeholder="So others know who suggested it" value={ideaForm.submittedBy} onChange={e => setIdeaForm(p => ({ ...p, submittedBy: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowIdeaModal(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
+              <button onClick={submitIdea} className="btn-primary flex-1 justify-center">Submit Idea</button>
+            </div>
+          </div>
         </div>
       )}
 
